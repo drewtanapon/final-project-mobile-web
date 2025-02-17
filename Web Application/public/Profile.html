@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ข้อมูลส่วนตัว</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    <style>
+        body { text-align: center; padding: 20px; background-color: #f0f8ff; }
+        .container { width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 10px #888888; }
+        input, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; }
+        button { background-color: #0000cc; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #000099; }
+        .hidden { display: none; }
+        img { border-radius: 50%; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>ข้อมูลส่วนตัว</h2>
+        <img id="profile-pic" src="default-profile.png" alt="Profile Picture" width="100">
+        <p><strong>ชื่อ:</strong> <span id="display-username"></span></p>
+        <p><strong>อีเมล:</strong> <span id="display-email"></span></p>
+        <p><strong>เบอร์โทร:</strong> <span id="display-phone"></span></p>
+
+        <!-- ฟอร์มแก้ไข -->
+        <div id="edit-form" class="hidden">
+            <input type="file" id="profile-image">
+            <input type="text" id="username" placeholder="ชื่อผู้ใช้">
+            <input type="email" id="email" placeholder="อีเมล">
+            <input type="tel" id="phone" placeholder="เบอร์โทร">
+        </div>
+
+        <button id="edit-btn" onclick="toggleEdit(true)">แก้ไขข้อมูล</button>
+        <button id="save-btn" class="hidden" onclick="saveProfile()">บันทึก</button>
+        <button id="cancel-btn" class="hidden" onclick="toggleEdit(false)">ยกเลิก</button>
+        <button onclick="window.location.href='index.html'">กลับหน้าหลัก</button>
+    </div>
+
+    <script>
+        const firebaseConfig = { /* ใส่ Firebase Config ของคุณ */ };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        let currentUserEmail = "";
+
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                currentUserEmail = user.email;
+                db.collection("users").doc(currentUserEmail).get().then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        document.getElementById("display-username").innerText = data.username || "ไม่ระบุ";
+                        document.getElementById("display-email").innerText = data.email || "ไม่ระบุ";
+                        document.getElementById("display-phone").innerText = data.phone || "ไม่ระบุ";
+                        document.getElementById("profile-pic").src = data.profilePic || "default-profile.png";
+                    }
+                });
+            } else {
+                window.location.href = "login.html"; // ถ้าไม่ได้ล็อกอิน ให้กลับไปหน้า Login
+            }
+        });
+
+        function toggleEdit(editMode) {
+            document.getElementById("edit-form").classList.toggle("hidden", !editMode);
+            document.getElementById("edit-btn").classList.toggle("hidden", editMode);
+            document.getElementById("save-btn").classList.toggle("hidden", !editMode);
+            document.getElementById("cancel-btn").classList.toggle("hidden", !editMode);
+
+            if (editMode) {
+                document.getElementById("username").value = document.getElementById("display-username").innerText;
+                document.getElementById("email").value = document.getElementById("display-email").innerText;
+                document.getElementById("phone").value = document.getElementById("display-phone").innerText;
+            }
+        }
+
+        function saveProfile() {
+            if (!currentUserEmail) return;
+
+            const username = document.getElementById("username").value;
+            const email = document.getElementById("email").value;
+            const phone = document.getElementById("phone").value;
+            const file = document.getElementById("profile-image").files[0];
+
+            let updateData = { username, email, phone };
+
+            if (file) {
+                const storageRef = storage.ref('profile_pictures/' + currentUserEmail);
+                storageRef.put(file).then(() => {
+                    storageRef.getDownloadURL().then((url) => {
+                        updateData.profilePic = url;
+                        updateUserProfile(updateData);
+                    });
+                });
+            } else {
+                updateUserProfile(updateData);
+            }
+        }
+
+        function updateUserProfile(data) {
+            db.collection("users").doc(currentUserEmail).set(data, { merge: true })
+                .then(() => {
+                    alert("บันทึกสำเร็จ!");
+                    location.reload();
+                })
+                .catch(error => {
+                    alert("เกิดข้อผิดพลาด: " + error.message);
+                });
+        }
+    </script>
+</body>
+</html>
