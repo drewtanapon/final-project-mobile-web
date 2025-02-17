@@ -183,6 +183,8 @@
 
       const db = firebase.firestore();
 
+
+
       firebase.auth().onAuthStateChanged((user) => {
             if (user) {
               console.log("User logged in: ", user);
@@ -206,14 +208,10 @@
             }
       });
 
-      function toggleLogin() {
-    firebase.auth().signOut().then(() => {
-        alert("คุณออกจากระบบแล้ว!");
-        window.location.href = "login.html"; // กลับไปหน้า Login
-    }).catch((error) => {
-        console.error("เกิดข้อผิดพลาดในการออกจากระบบ:", error);
-    });
+      
 
+      function toggleAddSubject() {
+        window.location.href = "addSubject.html";
       }
 
       function toggleAddSubject() {
