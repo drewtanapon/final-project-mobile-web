@@ -143,41 +143,47 @@
         }
 
         // Login with Google and Save to Firestore
-        function loginWithGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            firebase.auth().signInWithPopup(provider)
-                .then((result) => {
-                    const user = result.user;
+        async function loginWithGoogle() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result = await firebase.auth().signInWithPopup(provider);
+                const user = result.user;
 
-                    if (user) {
-                        console.log("User logged in:", user);
+                if (user) {
+                    console.log("✅ User logged in:", user);
 
-                        // ดึงข้อมูลจาก Google
-                        const uid = user.uid;
-                        const displayName = user.displayName || "ไม่ระบุ";
-                        const email = user.email || "-";
+                    // ดึงข้อมูลจาก Google
+                    const uid = user.uid;
+                    const displayName = user.displayName || "ไม่ระบุ";
+                    const email = user.email || "-";
+                    const photoURL = user.photoURL || ""; // ดึงรูปโปรไฟล์
 
-                        // 📌 บันทึกข้อมูลลง Firestore (เฉพาะครั้งแรก)
-                        saveUserToFirestore(uid, displayName, email);
+                    // 🔥 บันทึกข้อมูลไปยัง Firestore ทันที
+                    await saveUserToFirestore(uid, displayName, email, photoURL);
 
-                        // ไปที่หน้า index.html
-                        window.location.href = "index.html";
-                    }
-                })
-                .catch((error) => {
-                    alert(error.message);
-                });
+                    // ✅ เปลี่ยนหน้าเมื่อบันทึกข้อมูลเสร็จ
+                    window.location.href = "index.html";
+                }
+            } catch (error) {
+                console.error("❌ Error during Google Login:", error);
+                alert(error.message);
+            }
         }
 
-        function saveUserToFirestore(uid, displayName, email) {
-            return db.collection("users").doc(uid).set({
-                displayName: displayName,
-                email: email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true }) // ✅ ใช้ `merge: true` เพื่ออัปเดตข้อมูลหากมีอยู่แล้ว
-            .then(() => {
-                console.log("✅ User data saved to Firestore");
-            });
+        // 📌 ฟังก์ชันบันทึกข้อมูลลง Firestore
+        async function saveUserToFirestore(uid, displayName, email, photoURL) {
+            try {
+                await db.collection("users").doc(uid).set({
+                    displayName: displayName,
+                    email: email,
+                    photoURL: photoURL, // บันทึกภาพโปรไฟล์
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true }); // ✅ merge เพื่อป้องกันการเขียนทับข้อมูลเดิม
+
+                console.log("✅ User data saved to Firestore instantly");
+            } catch (error) {
+                console.error("❌ Error saving user data to Firestore:", error);
+            }
         }
 
         // Firebase Phone Authentication (OTP)

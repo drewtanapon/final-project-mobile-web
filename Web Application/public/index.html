@@ -189,30 +189,30 @@
             if (user) {
               console.log("User logged in: ", user);
               
-              // ดึงข้อมูลจาก providerData หากมีค่า
-              const providerData = user.providerData[0] || {};
-              const displayName = user.displayName || providerData.displayName || "ไม่ระบุ";
-              const email = user.email || providerData.email || "-";
-                // แสดงชื่อผู้ใช้
-              document.getElementById("user-name").innerText = user.displayName || "ไม่ระบุ";
+              const uid = user.uid; // UID ของผู้ใช้
+              const userDocRef = db.collection("users").doc(uid);
 
-              // ตรวจสอบว่าเป็นการล็อกอินด้วย Email หรือ OTP
-              if (user.email) {
-                  document.getElementById("user-email").innerText = user.email;
-              } else {
-                  document.getElementById("user-email").innerText = "-"; // กรณีล็อกอินด้วย OTP
-              }
-            } else {
-                document.getElementById("user-name").innerText = "ยังไม่ได้ล็อกอิน";
-                document.getElementById("user-email").innerText = "-";
-            }
+              // 🔹 ดึงข้อมูลผู้ใช้จาก Firestore
+              userDocRef.onSnapshot((doc) => {
+                if (doc.exists) {
+                    const userData = doc.data();
+                    
+                    // ✅ อัปเดตค่าบน UI
+                    document.getElementById("user-name").innerText = userData.displayName || user.displayName || "ไม่ระบุ";
+                    document.getElementById("user-email").innerText = userData.email || user.email || "-";
+
+                    // ✅ อัปเดตรูปโปรไฟล์ (ถ้ามี)
+                    const profileImg = document.querySelector(".profile-img");
+                    profileImg.src = userData.photoURL || user.photoURL || "logo192.png";
+                } else {
+                    console.warn("⚠️ ไม่พบข้อมูลใน Firestore");
+                }
+              });
+           } else {
+              console.log("❌ ยังไม่ได้เข้าสู่ระบบ");
+              window.location.href = "login.html"; // กลับไปหน้า Login
+           }
       });
-
-      
-
-      function toggleAddSubject() {
-        window.location.href = "addSubject.html";
-      }
 
       function toggleAddSubject() {
         window.location.href = "addSubject.html";
