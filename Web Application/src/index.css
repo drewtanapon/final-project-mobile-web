@@ -1,13 +1,57 @@
 body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f8ff;
+  color: #000066;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  padding: 20px;
+  text-align: center;
 }
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+.container {
+  max-width: full;
+  max-height: full;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px #888888;
+}
+h1 {
+  color: #0000cc;
+}
+.user-info {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+.buttons {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+button {
+  background-color: #0000cc;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+button:hover {
+  background-color: #000099;
+}
+.subject-list {
+  text-align: left;
+  margin-top: 20px;
+}
+.subject-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+.subject-list li {
+  background: #e0ebff;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 5px;
+}
+.manage-classroom {
+  margin-top: 20px;
 }

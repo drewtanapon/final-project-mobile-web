@@ -2,42 +2,111 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
+    <meta name="theme-color" content="#0000FF" />
+    <meta name="description" content="User Dashboard Page" />
+    <title>หน้าหลัก - ระบบจัดการการสอน</title>
+    <link rel="stylesheet" href="index.css" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f8ff;
+        color: #000066;
+        margin: 0;
+        padding: 20px;
+        text-align: center;
+      }
+      .container {
+        max-width: fullscreen;
+        max-height: fullscreen;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px #888888;
+      }
+      h1 {
+        color: #0000cc;
+      }
+      .user-info {
+        font-size: 18px;
+        margin-bottom: 20px;
+      }
+      .buttons {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 20px;
+      }
+      button {
+        background-color: #0000cc;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      button:hover {
+        background-color: #000099;
+      }
+      .subject-list {
+        text-align: left;
+        margin-top: 20px;
+      }
+      .subject-list ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      .subject-list li {
+        background: #e0ebff;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+      }
+      .manage-classroom {
+        margin-top: 20px;
+      }
+    </style>
+    <script>
+      function toggleLogin() {
+        const loginButton = document.getElementById("login-btn");
+    
+        if (loginButton.innerText === "Login") {
+          // ไปที่หน้า login.html
+          window.location.href = "login.html";
+        } else {
+          // เปลี่ยนเป็น Login และแจ้งเตือนว่าออกจากระบบ
+          loginButton.innerText = "Login";
+          alert("คุณออกจากระบบแล้ว!");
+        }
+      }
+    </script>    
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+    <div class="container">
+      <h1>หน้าหลัก</h1>
+      
+      <div class="user-info">
+        <p>ข้อมูลผู้ใช้: <strong>ชื่อผู้ใช้</strong></p>
+      </div>
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+      <div class="buttons">
+        <button id="login-btn" onclick="toggleLogin()">Login</button>
+        <button>เพิ่มวิชา</button>
+        <button>แก้ไขข้อมูลส่วนตัว</button>
+      </div>
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
+      <div class="subject-list">
+        <h2>รายชื่อวิชาที่สอน</h2>
+        <ul>
+          <li>วิชา 1</li>
+          <li>วิชา 2</li>
+          <li>วิชา 3</li>
+        </ul>
+      </div>
+
+      <div class="manage-classroom">
+        <button>ไปจัดการห้องเรียน</button>
+      </div>
+    </div>
   </body>
 </html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ</title>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #000066;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px #888888;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #0000cc;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #000099;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>เข้าสู่ระบบ</h2>
+        <input type="email" id="email" placeholder="อีเมล">
+        <input type="password" id="password" placeholder="รหัสผ่าน">
+        <button onclick="login()">เข้าสู่ระบบ</button>
+        <p class="error" id="error-message"></p>
+    </div>
+
+    <script>
+        // กำหนดค่าการเชื่อมต่อ Firebase (แก้ให้ตรงกับโปรเจกต์ของคุณ)
+        const firebaseConfig = {
+        apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
+        authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
+        databaseURL: "https://webmobileapplication-cdaaf-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "webmobileapplication-cdaaf",
+        storageBucket: "webmobileapplication-cdaaf.firebasestorage.app",
+        messagingSenderId: "90430005457",
+        appId: "1:90430005457:web:47c8bdebb51fe92435e5f0",
+        measurementId: "G-J886NPRZWK"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const errorMessage = document.getElementById("error-message");
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    const user = userCredential.user;
+                    console.log("เข้าสู่ระบบสำเร็จ:", user);
+                    
+                    // ดึงข้อมูลผู้ใช้จาก Firestore
+                    db.collection("users").doc(user.uid).get()
+                        .then(doc => {
+                            if (doc.exists) {
+                                console.log("ข้อมูลผู้ใช้:", doc.data());
+                                window.location.href = "index.html"; // เปลี่ยนเส้นทางไปหน้าหลัก
+                            } else {
+                                errorMessage.textContent = "ไม่พบข้อมูลผู้ใช้!";
+                            }
+                        })
+                        .catch(error => {
+                            console.error("เกิดข้อผิดพลาด:", error);
+                        });
+
+                })
+                .catch(error => {
+                    console.error("เกิดข้อผิดพลาด:", error.message);
+                    errorMessage.textContent = "อีเมลหรือรหัสผ่านไม่ถูกต้อง!";
+                });
+        }
+    </script>
+</body>
+</html>
