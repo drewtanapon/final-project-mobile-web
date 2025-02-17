@@ -6,6 +6,7 @@
     <title>เข้าสู่ระบบ</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
         body {
@@ -118,6 +119,7 @@
             projectId: "webmobileapplication-cdaaf",
         };
         firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         // Login with Email/Password
         function login() {
@@ -138,16 +140,42 @@
                 });
         }
 
-        // Login with Google
+        // Login with Google and Save to Firestore
         function loginWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             firebase.auth().signInWithPopup(provider)
-                .then(() => {
-                    window.location.href = "index.html";
+                .then((result) => {
+                    const user = result.user;
+
+                    if (user) {
+                        console.log("User logged in:", user);
+
+                        // ดึงข้อมูลจาก Google
+                        const uid = user.uid;
+                        const displayName = user.displayName || "ไม่ระบุ";
+                        const email = user.email || "-";
+
+                        // 📌 บันทึกข้อมูลลง Firestore (เฉพาะครั้งแรก)
+                        saveUserToFirestore(uid, displayName, email);
+
+                        // ไปที่หน้า index.html
+                        window.location.href = "index.html";
+                    }
                 })
                 .catch((error) => {
                     alert(error.message);
                 });
+        }
+
+        function saveUserToFirestore(uid, displayName, email) {
+            return db.collection("users").doc(uid).set({
+                displayName: displayName,
+                email: email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true }) // ✅ ใช้ `merge: true` เพื่ออัปเดตข้อมูลหากมีอยู่แล้ว
+            .then(() => {
+                console.log("✅ User data saved to Firestore");
+            });
         }
 
         // Firebase Phone Authentication (OTP)
