@@ -27,7 +27,7 @@
             box-shadow: 0px 0px 10px #888888;
         }
         h1 {
-            color: #0000cc;
+            color: #004ef8;
             text-align: center;
         }
 
@@ -130,23 +130,7 @@
           border: 2px solid #ddd;
         }
     </style>
-    <script>
-
-
-
-        function toggleLogin() {
-            const loginButton = document.getElementById("login-btn");
-            if (loginButton.innerText === "Login") {
-                window.location.href = "login.html";
-            } else {
-                loginButton.innerText = "Login";
-                alert("คุณออกจากระบบแล้ว!");
-                window.location.href = "login.html";
-            }
-
-
-        }
-    </script>
+    
 </head>
 <body>
     <div class="container">
@@ -167,16 +151,19 @@
       
           <!-- 🔹 ขวาสุด: ปุ่ม "ข้อมูลส่วนตัว" และ "Logout" (เรียงแนวตั้ง) -->
           <div class="user-actions">
-              <button>ข้อมูลส่วนตัว</button>
-              <button id="login-btn" onclick="toggleLogin()">Logout</button>
+              <button id="Profile-bth" onclick="toggleProfile()">ข้อมูลส่วนตัว</button>
+              <button id="login-bth" onclick="toggleLogin()">Logout</button>
+          
           </div>
+         
         </div>
+
 
         <h2 style="text-align: center;">รายชื่อวิชาที่สอน</h2>
 
         <!-- ปุ่มเพิ่มวิชาให้อยู่ขวาสุด -->
         <div class="add-subject-container">
-            <button class="add-subject">เพิ่มวิชา</button>
+            <button id="addSubject-bth" onclick="toggleAddSubject()">เพิ่มวิชา</button>
         </div>
 
         <!-- รายชื่อวิชาที่สอน -->
@@ -220,20 +207,22 @@
       });
 
       function toggleLogin() {
-        const loginButton = document.getElementById("login-btn");
-        if (loginButton.innerText === "Login") {
-          window.location.href = "login.html";
-        } else {
-          loginButton.innerText = "Login";
-          alert("คุณออกจากระบบแล้ว!");
-          window.location.href = "login.html";
-        }
+    firebase.auth().signOut().then(() => {
+        alert("คุณออกจากระบบแล้ว!");
+        window.location.href = "login.html"; // กลับไปหน้า Login
+    }).catch((error) => {
+        console.error("เกิดข้อผิดพลาดในการออกจากระบบ:", error);
+    });
+
       }
 
       function toggleAddSubject() {
         window.location.href = "addSubject.html";
       }
 
+      function toggleProfile() {
+        window.location.href = "Profile.html";
+      }
        
       function loadSubjects() {
         const subjectList = document.getElementById("subject-list1");
