@@ -203,11 +203,13 @@
 
                     // ✅ อัปเดตรูปโปรไฟล์ (ถ้ามี)
                     const profileImg = document.querySelector(".profile-img");
-                    profileImg.src = userData.photoURL || user.photoURL || "logo192.png";
+                    profileImg.src = userData.photoURL || user.photoURL || "imageprofiledefault.jpg";
                 } else {
                     console.warn("⚠️ ไม่พบข้อมูลใน Firestore");
                 }
               });
+              // ✅ โหลดวิชาที่ผู้ใช้สร้างไว้
+              loadSubjects(uid);
            } else {
               console.log("❌ ยังไม่ได้เข้าสู่ระบบ");
               window.location.href = "login.html"; // กลับไปหน้า Login
@@ -230,30 +232,35 @@
         });
       }
        
-      function loadSubjects() {
+      // ✅ โหลดรายชื่อวิชาของผู้ใช้
+      function loadSubjects(userId) {
         const subjectList = document.getElementById("subject-list1");
-        subjectList.innerHTML = "กำลังโหลดข้อมูล...";
-        db.collection("classroom").get().then((querySnapshot) => {
-          subjectList.innerHTML = "";
-          querySnapshot.forEach((doc) => {
-            const li = document.createElement("li");
-            li.textContent = doc.data().info.code;
-            subjectList.appendChild(li);
-          });
-        }).catch((error) => {
-          subjectList.innerHTML = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
-        });
-      }
-      document.addEventListener("DOMContentLoaded", loadSubjects);
+        subjectList.innerHTML = "<li>กำลังโหลดข้อมูล...</li>";
 
-      function manageClass(subjectId) {
-          alert("จัดการห้องเรียนสำหรับวิชา ID: " + subjectId);
-      }
+        db.collection("users").doc(userId).collection("classroom")
+            .orderBy("createdAt", "desc")
+            .onSnapshot((querySnapshot) => {
+                subjectList.innerHTML = ""; // ล้างข้อมูลเก่า
+                if (querySnapshot.empty) {
+                    subjectList.innerHTML = "<li>ไม่มีรายวิชา</li>";
+                    return;
+                }
 
-      // เรียกใช้ฟังก์ชันดึงข้อมูลเมื่อหน้าโหลดเสร็จ
-      window.onload = fetchSubjects;
+                querySnapshot.forEach((doc) => {
+                    const subjectData = doc.data();
+                    const li = document.createElement("li");
+                    li.innerHTML = `
+                        <span>${subjectData.code} - ${subjectData.name}</span>
+                        <button onclick="manageClass('${doc.id}')">จัดการห้องเรียน</button>
+                    `;
+                    subjectList.appendChild(li);
+                });
+            });
+    }
 
-      
+    function manageClass(subjectId) {
+        alert("จัดการห้องเรียนสำหรับวิชา ID: " + subjectId);
+    }
     </script>
 </body>
 </html>
