@@ -1,117 +1,278 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
+<html lang="th">
+<head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0000FF" />
     <meta name="description" content="User Dashboard Page" />
     <title>หน้าหลัก - ระบบจัดการการสอน</title>
     <link rel="stylesheet" href="index.css" />
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script> 
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f0f8ff;
-        color: #000066;
-        margin: 0;
-        padding: 20px;
-        text-align: center;
-      }
-      .container {
-        max-width: fullscreen;
-        max-height: fullscreen;
-        margin: auto;
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0px 0px 10px #888888;
-      }
-      h1 {
-        color: #0000cc;
-      }
-      .user-info {
-        font-size: 18px;
-        margin-bottom: 20px;
-      }
-      .buttons {
-        display: flex;
-        justify-content: space-around;
-        margin-bottom: 20px;
-      }
-      button {
-        background-color: #0000cc;
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        cursor: pointer;
-        border-radius: 5px;
-      }
-      button:hover {
-        background-color: #000099;
-      }
-      .subject-list {
-        text-align: left;
-        margin-top: 20px;
-      }
-      .subject-list ul {
-        list-style-type: none;
-        padding: 0;
-      }
-      .subject-list li {
-        background: #e0ebff;
-        padding: 10px;
-        margin: 5px 0;
-        border-radius: 5px;
-      }
-      .manage-classroom {
-        margin-top: 20px;
-      }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #000066;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 100%;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px #888888;
+        }
+        h1 {
+            color: #0000cc;
+            text-align: center;
+        }
 
+        /* ปรับ Layout Header */
+        .header {
+            display: flex;
+            justify-content: space-between; /* จัดให้ข้อมูลซ้ายสุด + ปุ่มขวาสุด */
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        /* จัดให้รูปโปรไฟล์และข้อมูลอยู่ซ้ายสุด */
+        .user-info-container {
+            display: flex;
+            align-items: center; /* จัดเรียงข้อมูลในแนวเดียวกัน */
+            gap: 10px; /* ระยะห่างระหว่างรูปโปรไฟล์และข้อความ */
+        }
+
+        /* กล่องข้อความ (ชื่อ + อีเมล) */
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-info {
+          display: flex;
+          gap: 5px;
+          font-size: 16px;
+          margin: 0;
+        }
+
+        /* ปุ่มอยู่ขวาสุด */
+        .user-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            background-color: #0000cc;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        button:hover {
+            background-color: #000099;
+        }
+        /* ปรับตำแหน่งปุ่ม "เพิ่มวิชา" ให้อยู่ขวาสุด */
+        .add-subject-container {
+            display: flex;
+            justify-content: flex-end; /* ให้ปุ่มไปอยู่ขวาสุด */
+        }
+
+        .add-subject {
+            background-color: #008000;
+        }
+
+        .subject-list {
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .subject-list ul {
+            list-style-type: none;
+            padding: 0;
+            width: 100%;
+        }
+
+        .subject-list li {
+            background: #e0ebff;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .manage-classroom button {
+            background-color: #ff8c00;
+        }
+
+        .manage-classroom button:hover {
+            background-color: #e07b00;
+        }
+
+        .profile-img {
+          width: 60px; /* ขนาดรูป */
+          height: 60px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid #ddd;
+        }
     </style>
     <script>
-      function toggleLogin() {
-        const loginButton = document.getElementById("login-btn");
-    
-        if (loginButton.innerText === "Login") {
-          // ไปที่หน้า login.html
-          window.location.href = "login.html";
-        } else {
-          // เปลี่ยนเป็น Login และแจ้งเตือนว่าออกจากระบบ
-          loginButton.innerText = "Login";
-          alert("คุณออกจากระบบแล้ว!");
-          window.location.href = "login.html";
+        function toggleLogin() {
+            const loginButton = document.getElementById("login-btn");
+            if (loginButton.innerText === "Login") {
+                window.location.href = "login.html";
+            } else {
+                loginButton.innerText = "Login";
+                alert("คุณออกจากระบบแล้ว!");
+                window.location.href = "login.html";
+            }
+
+
         }
-      }
-      
-    </script>    
-  </head>
-  <body>
+    </script>
+</head>
+<body>
     <div class="container">
-      <h1>หน้าหลัก</h1>
+        <!-- Header -->
+        <div class="header">
+          <!-- 🔹 ซ้ายสุด: รูปโปรไฟล์ + ชื่อและอีเมล -->
+          <div class="user-info-container">
+              <img class="profile-img" src="logo192.png" alt="รูปโปรไฟล์">
+              <div class="user-details">
+                  <p class="user-info">
+                      <strong>ชื่อผู้ใช้:</strong> <span id="user-name">กำลังโหลด...</span>
+                  </p>
+                  <p class="user-info">
+                      <strong>อีเมล์ผู้ใช้:</strong> <span id="user-email">-</span>
+                  </p>
+              </div>
+          </div>
       
-      <div class="user-info">
-        <p>ข้อมูลผู้ใช้: <strong>ชื่อผู้ใช้</strong></p>
-      </div>
+          <!-- 🔹 ขวาสุด: ปุ่ม "ข้อมูลส่วนตัว" และ "Logout" (เรียงแนวตั้ง) -->
+          <div class="user-actions">
+              <button>ข้อมูลส่วนตัว</button>
+              <button id="login-btn" onclick="toggleLogin()">Logout</button>
+          </div>
+        </div>
 
-      <div class="buttons">
-        <button id="login-btn" onclick="toggleLogin()">Logout</button>
-        <button>เพิ่มวิชา</button>
-        <button onclick="window.location.href='Profile.html'">Profile</button>
-      </div>
+        <h2 style="text-align: center;">รายชื่อวิชาที่สอน</h2>
 
-      <div class="subject-list">
-        <h2>รายชื่อวิชาที่สอน</h2>
-        <ul>
-          <li>วิชา 1</li>
-          <li>วิชา 2</li>
-          <li>วิชา 3</li>
-        </ul>
-      </div>
+        <!-- ปุ่มเพิ่มวิชาให้อยู่ขวาสุด -->
+        <div class="add-subject-container">
+            <button class="add-subject">เพิ่มวิชา</button>
+        </div>
 
-      <div class="manage-classroom">
-        <button>ไปจัดการห้องเรียน</button>
-      </div>
+        <!-- รายชื่อวิชาที่สอน -->
+        <div class="subject-list">
+            <ul>
+                <li>
+                    <span>วิชา 1</span>
+                    <div class="manage-classroom">
+                        <button>จัดการห้องเรียน</button>
+                    </div>
+                </li>
+                <li>
+                    <span>วิชา 2</span>
+                    <div class="manage-classroom">
+                        <button>จัดการห้องเรียน</button>
+                    </div>
+                </li>
+                <li>
+                    <span>วิชา 3</span>
+                    <div class="manage-classroom">
+                        <button>จัดการห้องเรียน</button>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>  
+    <script>
+      // ตั้งค่า Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
+        authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
+        projectId: "webmobileapplication-cdaaf",
+      };
+      firebase.initializeApp(firebaseConfig);
 
+      //const db = firebase.firestore();
 
-    </div>
-  </body>
+      firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+              console.log("User logged in: ", user);
+              
+              // ดึงข้อมูลจาก providerData หากมีค่า
+              const providerData = user.providerData[0] || {};
+              const displayName = user.displayName || providerData.displayName || "ไม่ระบุ";
+              const email = user.email || providerData.email || "-";
+                // แสดงชื่อผู้ใช้
+              document.getElementById("user-name").innerText = user.displayName || "ไม่ระบุ";
+
+              // ตรวจสอบว่าเป็นการล็อกอินด้วย Email หรือ OTP
+              if (user.email) {
+                  document.getElementById("user-email").innerText = user.email;
+              } else {
+                  document.getElementById("user-email").innerText = "-"; // กรณีล็อกอินด้วย OTP
+              }
+            } else {
+                document.getElementById("user-name").innerText = "ยังไม่ได้ล็อกอิน";
+                document.getElementById("user-email").innerText = "-";
+            }
+      });
+
+      function toggleLogin() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = "login.html"; // กลับไปหน้า Login
+            }).catch((error) => {
+                console.error("Logout Error:", error);
+            });
+        }
+
+      // ฟังก์ชันดึงข้อมูลจาก Firestore
+      function fetchSubjects() {
+          const subjectList = document.getElementById("subject-list");
+          subjectList.innerHTML = ""; // เคลียร์ข้อมูลเดิม
+
+          db.collection("subjects").get().then((querySnapshot) => {
+              if (querySnapshot.empty) {
+                  subjectList.innerHTML = "<li>ไม่มีวิชา</li>";
+                  return;
+              }
+              
+              querySnapshot.forEach((doc) => {
+                  const subject = doc.data();
+                  const li = document.createElement("li");
+                  li.innerHTML = `
+                      <span>${subject.name}</span>
+                      <button onclick="manageClass('${doc.id}')">จัดการห้องเรียน</button>
+                  `;
+                  subjectList.appendChild(li);
+              });
+          }).catch((error) => {
+              console.error("Error fetching subjects: ", error);
+              subjectList.innerHTML = "<li>เกิดข้อผิดพลาดในการโหลดข้อมูล</li>";
+          });
+      }
+
+      function manageClass(subjectId) {
+          alert("จัดการห้องเรียนสำหรับวิชา ID: " + subjectId);
+      }
+
+      // เรียกใช้ฟังก์ชันดึงข้อมูลเมื่อหน้าโหลดเสร็จ
+      window.onload = fetchSubjects;
+    </script>
+</body>
 </html>
