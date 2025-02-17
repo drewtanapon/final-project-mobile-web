@@ -8,7 +8,8 @@
     <title>หน้าหลัก - ระบบจัดการการสอน</title>
     <link rel="stylesheet" href="index.css" />
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script> 
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -130,6 +131,9 @@
         }
     </style>
     <script>
+
+
+
         function toggleLogin() {
             const loginButton = document.getElementById("login-btn");
             if (loginButton.innerText === "Login") {
@@ -177,27 +181,9 @@
 
         <!-- รายชื่อวิชาที่สอน -->
         <div class="subject-list">
-            <ul>
-                <li>
-                    <span>วิชา 1</span>
-                    <div class="manage-classroom">
-                        <button>จัดการห้องเรียน</button>
-                    </div>
-                </li>
-                <li>
-                    <span>วิชา 2</span>
-                    <div class="manage-classroom">
-                        <button>จัดการห้องเรียน</button>
-                    </div>
-                </li>
-                <li>
-                    <span>วิชา 3</span>
-                    <div class="manage-classroom">
-                        <button>จัดการห้องเรียน</button>
-                    </div>
-                </li>
-            </ul>
-        </div>
+            <ul id="subject-list1"></ul>    
+          </div>
+    
     </div>  
     <script>
       // ตั้งค่า Firebase
@@ -208,7 +194,7 @@
       };
       firebase.initializeApp(firebaseConfig);
 
-      //const db = firebase.firestore();
+      const db = firebase.firestore();
 
       firebase.auth().onAuthStateChanged((user) => {
             if (user) {
@@ -234,38 +220,36 @@
       });
 
       function toggleLogin() {
-            firebase.auth().signOut().then(() => {
-                window.location.href = "login.html"; // กลับไปหน้า Login
-            }).catch((error) => {
-                console.error("Logout Error:", error);
-            });
+        const loginButton = document.getElementById("login-btn");
+        if (loginButton.innerText === "Login") {
+          window.location.href = "login.html";
+        } else {
+          loginButton.innerText = "Login";
+          alert("คุณออกจากระบบแล้ว!");
+          window.location.href = "login.html";
         }
-
-      // ฟังก์ชันดึงข้อมูลจาก Firestore
-      function fetchSubjects() {
-          const subjectList = document.getElementById("subject-list");
-          subjectList.innerHTML = ""; // เคลียร์ข้อมูลเดิม
-
-          db.collection("subjects").get().then((querySnapshot) => {
-              if (querySnapshot.empty) {
-                  subjectList.innerHTML = "<li>ไม่มีวิชา</li>";
-                  return;
-              }
-              
-              querySnapshot.forEach((doc) => {
-                  const subject = doc.data();
-                  const li = document.createElement("li");
-                  li.innerHTML = `
-                      <span>${subject.name}</span>
-                      <button onclick="manageClass('${doc.id}')">จัดการห้องเรียน</button>
-                  `;
-                  subjectList.appendChild(li);
-              });
-          }).catch((error) => {
-              console.error("Error fetching subjects: ", error);
-              subjectList.innerHTML = "<li>เกิดข้อผิดพลาดในการโหลดข้อมูล</li>";
-          });
       }
+
+      function toggleAddSubject() {
+        window.location.href = "addSubject.html";
+      }
+
+       
+      function loadSubjects() {
+        const subjectList = document.getElementById("subject-list1");
+        subjectList.innerHTML = "กำลังโหลดข้อมูล...";
+        db.collection("classroom").get().then((querySnapshot) => {
+          subjectList.innerHTML = "";
+          querySnapshot.forEach((doc) => {
+            const li = document.createElement("li");
+            li.textContent = doc.data().info.code;
+            subjectList.appendChild(li);
+          });
+        }).catch((error) => {
+          subjectList.innerHTML = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
+        });
+      }
+      document.addEventListener("DOMContentLoaded", loadSubjects);
 
       function manageClass(subjectId) {
           alert("จัดการห้องเรียนสำหรับวิชา ID: " + subjectId);
@@ -273,6 +257,8 @@
 
       // เรียกใช้ฟังก์ชันดึงข้อมูลเมื่อหน้าโหลดเสร็จ
       window.onload = fetchSubjects;
+
+      
     </script>
 </body>
 </html>
