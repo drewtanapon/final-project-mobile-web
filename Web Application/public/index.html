@@ -176,7 +176,7 @@
 
         <!-- ปุ่มเพิ่มวิชาให้อยู่ขวาสุด -->
         <div class="add-subject-container">
-            <button class="add-subject">เพิ่มวิชา</button>
+            <button class="add-subject" onclick="toggleAddSubject()">เพิ่มวิชา</button>
         </div>
 
         <!-- รายชื่อวิชาที่สอน -->
@@ -195,6 +195,8 @@
       firebase.initializeApp(firebaseConfig);
 
       const db = firebase.firestore();
+
+
 
       firebase.auth().onAuthStateChanged((user) => {
             if (user) {
@@ -219,15 +221,10 @@
             }
       });
 
-      function toggleLogin() {
-        const loginButton = document.getElementById("login-btn");
-        if (loginButton.innerText === "Login") {
-          window.location.href = "login.html";
-        } else {
-          loginButton.innerText = "Login";
-          alert("คุณออกจากระบบแล้ว!");
-          window.location.href = "login.html";
-        }
+      
+
+      function toggleAddSubject() {
+        window.location.href = "addSubject.html";
       }
 
       function toggleAddSubject() {

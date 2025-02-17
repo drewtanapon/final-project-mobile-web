@@ -3,15 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Classroom Form</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px #888888;
+            width: 300px;
+            text-align: center;
+        }
+        input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: block;
+        }
+        button {
+            background-color: #0000cc;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #000099;
+        }
+    </style>
 </head>
 <body>
-    <input type="code" id="code" placeholder="Code">
-    <input type="name" id="name" placeholder="Name">
-    <input type="photo" id="photo" placeholder="Photo">
-    <input type="room" id="room" placeholder="Room">
-    <input type="owner" id="owner" placeholder="Owner">
+    <div class="container">
+        <h2>Classroom Form</h2>
+        <input type="text" id="code" placeholder="Code">
+        <input type="text" id="name" placeholder="Name">
+        <input type="text" id="photo" placeholder="Photo URL">
+        <input type="text" id="room" placeholder="Room">
+        <input type="text" id="owner" placeholder="Owner">
+        <button onclick="saveData()">Save</button>
+    </div>
 </body>
 </html>
