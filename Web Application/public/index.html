@@ -65,6 +65,7 @@
       .manage-classroom {
         margin-top: 20px;
       }
+
     </style>
     <script>
       function toggleLogin() {
@@ -77,8 +78,10 @@
           // เปลี่ยนเป็น Login และแจ้งเตือนว่าออกจากระบบ
           loginButton.innerText = "Login";
           alert("คุณออกจากระบบแล้ว!");
+          window.location.href = "login.html";
         }
       }
+      
     </script>    
   </head>
   <body>
@@ -90,7 +93,7 @@
       </div>
 
       <div class="buttons">
-        <button id="login-btn" onclick="toggleLogin()">Login</button>
+        <button id="login-btn" onclick="toggleLogin()">Logout</button>
         <button>เพิ่มวิชา</button>
         <button>แก้ไขข้อมูลส่วนตัว</button>
       </div>
