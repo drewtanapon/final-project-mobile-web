@@ -6,6 +6,7 @@
     <title>เข้าสู่ระบบ</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
         body {
@@ -14,6 +15,7 @@
             color: #02020b;
             text-align: center;
             padding: 20px;
+            margin: 0;
         }
         .container {
             max-width: 400px;
@@ -25,8 +27,9 @@
         }
         input {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             margin: 10px 0;
+            box-sizing: border-box;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
@@ -118,6 +121,7 @@
             projectId: "webmobileapplication-cdaaf",
         };
         firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         // Login with Email/Password
         function login() {
@@ -138,16 +142,48 @@
                 });
         }
 
-        // Login with Google
-        function loginWithGoogle() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            firebase.auth().signInWithPopup(provider)
-                .then(() => {
+        // Login with Google and Save to Firestore
+        async function loginWithGoogle() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result = await firebase.auth().signInWithPopup(provider);
+                const user = result.user;
+
+                if (user) {
+                    console.log("✅ User logged in:", user);
+
+                    // ดึงข้อมูลจาก Google
+                    const uid = user.uid;
+                    const displayName = user.displayName || "ไม่ระบุ";
+                    const email = user.email || "-";
+                    const photoURL = user.photoURL || ""; // ดึงรูปโปรไฟล์
+
+                    // 🔥 บันทึกข้อมูลไปยัง Firestore ทันที
+                    await saveUserToFirestore(uid, displayName, email, photoURL);
+
+                    // ✅ เปลี่ยนหน้าเมื่อบันทึกข้อมูลเสร็จ
                     window.location.href = "index.html";
-                })
-                .catch((error) => {
-                    alert(error.message);
-                });
+                }
+            } catch (error) {
+                console.error("❌ Error during Google Login:", error);
+                alert(error.message);
+            }
+        }
+
+        // 📌 ฟังก์ชันบันทึกข้อมูลลง Firestore
+        async function saveUserToFirestore(uid, displayName, email, photoURL) {
+            try {
+                await db.collection("users").doc(uid).set({
+                    displayName: displayName,
+                    email: email,
+                    photoURL: photoURL, // บันทึกภาพโปรไฟล์
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true }); // ✅ merge เพื่อป้องกันการเขียนทับข้อมูลเดิม
+
+                console.log("✅ User data saved to Firestore instantly");
+            } catch (error) {
+                console.error("❌ Error saving user data to Firestore:", error);
+            }
         }
 
         // Firebase Phone Authentication (OTP)

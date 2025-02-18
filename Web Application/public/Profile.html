@@ -14,14 +14,15 @@
         input, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; }
         button { background-color: #0000cc; color: white; border: none; cursor: pointer; }
         button:hover { background-color: #000099; }
-        .hidden { display: none; }
+        .hidden { display: none;}
         img { border-radius: 50%; }
+        .from {width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;}
     </style>
 </head>
 <body>
     <div class="container">
         <h2>ข้อมูลส่วนตัว</h2>
-        <img id="profile-pic" src="default-profile.png" alt="Profile Picture" width="100">
+        <img id="profile-pic" src="imageprofiledefault.jpg" alt="Profile Picture" width="100">
         <p><strong>ชื่อ:</strong> <span id="display-username"></span></p>
         <p><strong>อีเมล:</strong> <span id="display-email"></span></p>
         <p><strong>เบอร์โทร:</strong> <span id="display-phone"></span></p>
@@ -29,9 +30,9 @@
         <!-- ฟอร์มแก้ไข -->
         <div id="edit-form" class="hidden">
             <input type="file" id="profile-image">
-            <input type="text" id="username" placeholder="ชื่อผู้ใช้">
-            <input type="email" id="email" placeholder="อีเมล">
-            <input type="tel" id="phone" placeholder="เบอร์โทร">
+            <input type="text" id="username" class="from"  placeholder="ชื่อผู้ใช้">
+            <input type="email" id="email" class="from" placeholder="อีเมล">
+            <input type="tel" id="phone" class="from" placeholder="เบอร์โทร">
         </div>
 
         <button id="edit-btn" onclick="toggleEdit(true)">แก้ไขข้อมูล</button>
@@ -46,6 +47,7 @@
             apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
             authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
             projectId: "webmobileapplication-cdaaf",
+            storageBucket: "webmobileapplication-cdaaf.appspot.com",  // ✅ เพิ่มบรรทัดนี้
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -62,10 +64,10 @@
                 db.collection("users").doc(currentUserUID).onSnapshot(doc => {
                     if (doc.exists) {
                         const data = doc.data();
-                        document.getElementById("display-username").innerText = data.username || "ไม่ระบุ";
+                        document.getElementById("display-username").innerText = data.displayName || "ไม่ระบุ";
                         document.getElementById("display-email").innerText = data.email || user.email; // ใช้อีเมลจาก Firebase Auth
-                        document.getElementById("display-phone").innerText = data.phonenumber;
-                        document.getElementById("profile-pic").src = data.profilePic || "default-profile.png";
+                        document.getElementById("display-phone").innerText = data.phone;
+                        document.getElementById("profile-pic").src = data.photoURL || "imageprofiledefault.jpg";
                     }
                 });
             } else {

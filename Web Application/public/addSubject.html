@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Form</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px #888888;
+            width: 300px;
+            text-align: center;
+        }
+        input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: block;
+        }
+        button {
+            background-color: #0000cc;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #000099;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Classroom Form</h2>
+        <input type="text" id="code" placeholder="รหัสวิชา">
+        <input type="text" id="name" placeholder="ชื่อวิชา">
+        <input type="text" id="photo" placeholder="ลิงก์รูปภาพ">
+        <input type="text" id="room" placeholder="ห้องเรียน">
+        <button onclick="saveSubject()">บันทึก</button>
+    </div>
+
+    <script>
+        // 🔥 ตั้งค่า Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
+            authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
+            projectId: "webmobileapplication-cdaaf",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function saveSubject() {
+            const code = document.getElementById("code").value.trim();
+            const name = document.getElementById("name").value.trim();
+            const photo = document.getElementById("photo").value.trim();
+            const room = document.getElementById("room").value.trim();
+
+            // ✅ ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
+            firebase.auth().onAuthStateChanged(user => {
+                if (!user) {
+                    alert("กรุณาเข้าสู่ระบบก่อน");
+                    return;
+                }
+
+                const userId = user.uid; // ใช้ UID ของผู้ใช้เป็นที่เก็บข้อมูลเฉพาะของเขา
+
+                if (!code || !name || !room) {
+                    alert("กรุณากรอกข้อมูลให้ครบ");
+                    return;
+                }
+
+                // ✅ บันทึกข้อมูลแยกตาม `userId`
+                db.collection("users").doc(userId).collection("classroom").add({
+                    code: code,
+                    name: name,
+                    photo: photo,
+                    room: room,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    alert("✅ บันทึกข้อมูลสำเร็จ!");
+                    document.querySelectorAll("input").forEach(input => input.value = ""); // เคลียร์ค่า input
+                    
+                    // 🔹 หลังจากบันทึกเสร็จให้เปลี่ยนหน้าไปที่ index.html
+                    window.location.href = "index.html";
+                }).catch(error => {
+                    console.error("❌ เกิดข้อผิดพลาด: ", error);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
