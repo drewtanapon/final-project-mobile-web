@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>จัดการห้องเรียน</title>
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+  <!-- QRCode.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     /* กำหนดสไตล์พื้นฐาน */
     body {
@@ -123,8 +126,12 @@
   <!-- ส่วนหัวแสดงข้อมูลวิชา -->
   <div class="header">
     <div class="subject-info">
-      <div class="subject-code"><p><strong>รหัสวิชา: </strong><span id = "display-subjectCode"></span></p></div>
-      <div class="subject-name"><p><strong>ชื่อรายวิชา: </strong><span id = "display-subjectName"></span></p></div>
+      <div class="subject-code">
+        <p><strong>รหัสวิชา: </strong><span id="display-subjectCode"></span></p>
+      </div>
+      <div class="subject-name">
+        <p><strong>ชื่อรายวิชา: </strong><span id="display-subjectName"></span></p>
+      </div>
     </div>
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
@@ -152,7 +159,7 @@
           <td>1</td>
           <td>STU001</td>
           <td>สมชาย ใจดี</td>
-          <td><img src="student1.jpg" alt="student1" width="50"></td>
+          <td><img src="" alt="student1" width="50"></td>
           <td>Active</td>
         </tr>
       </tbody>
@@ -174,56 +181,74 @@
     <div class="modal-content">
       <span class="close" onclick="closeQR()">×</span>
       <div id="qr-code">
-        <!-- QR Code จะแสดงที่นี่ (อาจใช้ library สร้าง QR Code แบบ dynamic) -->
-        <img src="qrcode-placeholder.png" alt="QRCode" width="200">
+        <!-- QR Code จะแสดงที่นี่ -->
       </div>
     </div>
   </div>
 
   <script>
+    // ดึง subjectId จาก query string
     const urlParams = new URLSearchParams(window.location.search);
     const subjectId = urlParams.get('subjectId');
 
     let currentUserUID = "";
     const firebaseConfig = {
-            apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
-            authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
-            projectId: "webmobileapplication-cdaaf",
-            storageBucket: "webmobileapplication-cdaaf.appspot.com",  // ✅ เพิ่มบรรทัดนี้
+      apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
+      authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
+      projectId: "webmobileapplication-cdaaf",
+      storageBucket: "webmobileapplication-cdaaf.appspot.com",
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const storage = firebase.storage();
-    
 
-    firebase.auth().onAuthStateChanged((user) =>{
-        if (user) {
-            currentUserUID = user.uid;
-
-            db.collection("users").doc(currentUserUID).collection("classroom").onSnapshot(doc =>{
-                
-            })
-        }
+    // ดึงข้อมูลรายวิชาจาก Firestore ด้วย subjectId
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        currentUserUID = user.uid;
+        db.collection("users")
+          .doc(currentUserUID)
+          .collection("classroom")
+          .doc(subjectId)
+          .onSnapshot((doc) => {
+            if (doc.exists) {
+              const data = doc.data();
+              document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
+              document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
+            }
+          });
+      }
     });
-    
-    
 
-    // เปิด modal แสดง QR Code
+    // เมื่อคลิกปุ่มแสดง QR Code
     document.getElementById("btn-qr").addEventListener("click", function(){
+      // แสดง modal สำหรับ QR Code
       document.getElementById("qr-modal").style.display = "block";
-      // สามารถเพิ่มโค้ดสำหรับสร้าง QR Code แบบ dynamic ที่นี่ได้
+      // ล้าง container ก่อนสร้างใหม่ (กรณีคลิกหลายครั้ง)
+      document.getElementById("qr-code").innerHTML = "";
+      // สร้าง URL สำหรับการลงทะเบียนวิชาโดยใช้ subjectId
+      const registrationUrl = `https://yourdomain.com/register?subjectId=${subjectId}`;
+      // สร้าง QR Code ด้วย registrationUrl
+      new QRCode(document.getElementById("qr-code"), {
+        text: registrationUrl,
+        width: 128,
+        height: 128,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
     });
 
-    // ฟังก์ชันปิด QR Code modal
+    // ฟังก์ชันปิด modal QR Code
     function closeQR() {
       document.getElementById("qr-modal").style.display = "none";
     }
 
-    // ฟังก์ชันสำหรับเพิ่มการเช็คชื่อ
+    // เมื่อคลิกปุ่มเพิ่มการเช็คชื่อ
     document.getElementById("btn-checkin").addEventListener("click", function(){
-      // ตัวอย่างการตั้งหมายเลขการเช็คชื่อใหม่ (cno) โดยอาจใช้ timestamp หรือวิธีอื่น
+      // ตัวอย่างการตั้งหมายเลขการเช็คชื่อใหม่ (cno) โดยใช้ timestamp
       const newCno = Date.now(); 
-      const cid = "ABC123"; // ควรเปลี่ยนให้เป็นค่า dynamic จากข้อมูลห้องเรียน
+      const cid = "ABC123"; // ควรเปลี่ยนให้เป็นค่า dynamic จากข้อมูลห้องเรียนจริง
 
       /* 
          ขั้นตอน:
@@ -233,10 +258,8 @@
          ส่วนนี้จะต้องเชื่อมต่อกับ backend หรือใช้ Firebase API เพื่อดำเนินการ
       */
       
-      // ตัวอย่างแจ้งเตือน (Alert) เพื่อยืนยันการสร้างเช็คชื่อใหม่
+      // ตัวอย่างแจ้งเตือนเพื่อยืนยันการสร้างการเช็คชื่อใหม่
       alert("สร้างการเช็คชื่อใหม่: " + newCno);
-      
-      // หลังจากสร้างการเช็คชื่อแล้ว สามารถเรียกฟังก์ชันโหลดประวัติการเช็คชื่อใหม่ได้
     });
   </script>
 </body>
