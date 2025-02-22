@@ -4,59 +4,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เข้าสู่ระบบ</title>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js" defer></script>
+
     <style>
         body {
+            font-family: Arial, sans-serif;
+            background: url("_A Greeny Night_.jfif") no-repeat center center fixed;
+            background-size: cover;
+            margin: 0;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg);
-            color: #fff;
-            text-align: center;
-            height: 100vh;
-            margin: 0;
+            position: relative;
         }
+
         .container {
-            max-width: 400px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
+            width: 350px;
+            background: rgba(209, 243, 173, 0.642);
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+            text-align: center;
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
+
         h2 {
-            color: #020000;
+            color: #000000;
             margin-bottom: 20px;
+            font-size: 22px;
         }
+
         button {
-            background-color: #ff4d4d;
-            color: white;
+            background-color: #503620;
+            color: rgb(255, 255, 255);
             border: none;
             padding: 12px;
             cursor: pointer;
-            border-radius: 5px;
+            border-radius: 10px;
             width: 100%;
             margin-top: 10px;
             font-size: 16px;
             transition: 0.3s;
         }
+
         button:hover {
-            background-color: #cc0000;
+            background-color: #71430e;
         }
+
         .google-btn {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-            background-color: #db4437;
+            background-color: #6d2e0a;
         }
+
         .google-btn:hover {
             background-color: #c23321;
         }
+
         .google-logo {
             width: 20px;
             height: 20px;
@@ -73,46 +86,63 @@
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
-            authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
-            projectId: "webmobileapplication-cdaaf",
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        // ตรวจสอบว่า Firebase โหลดเสร็จแล้วก่อนเรียกใช้
+        document.addEventListener("DOMContentLoaded", function() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
+                authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
+                projectId: "webmobileapplication-cdaaf",
+                storageBucket: "webmobileapplication-cdaaf.appspot.com",
+                messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+                appId: "YOUR_APP_ID",
+                measurementId: "YOUR_MEASUREMENT_ID"
+            };
 
-        async function loginWithGoogle() {
-            try {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                const result = await firebase.auth().signInWithPopup(provider);
-                const user = result.user;
+            // เช็คว่า Firebase ถูก Initialize หรือยัง
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                firebase.app();
+            }
 
-                if (user) {
-                    const uid = user.uid;
-                    const displayName = user.displayName || "ไม่ระบุ";
-                    const email = user.email || "-";
-                    const photoURL = user.photoURL || "";
-                    
-                    await saveUserToFirestore(uid, displayName, email, photoURL);
-                    window.location.href = "index.html";
+            const db = firebase.firestore();
+
+            async function loginWithGoogle() {
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    const result = await firebase.auth().signInWithPopup(provider);
+                    const user = result.user;
+
+                    if (user) {
+                        const uid = user.uid;
+                        const displayName = user.displayName || "ไม่ระบุ";
+                        const email = user.email || "-";
+                        const photoURL = user.photoURL || "";
+
+                        await saveUserToFirestore(uid, displayName, email, photoURL);
+                        window.location.href = "index.html";
+                    }
+                } catch (error) {
+                    alert(error.message);
                 }
-            } catch (error) {
-                alert(error.message);
             }
-        }
 
-        async function saveUserToFirestore(uid, displayName, email, photoURL) {
-            try {
-                await db.collection("users").doc(uid).set({
-                    displayName: displayName,
-                    email: email,
-                    photoURL: photoURL,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
-            } catch (error) {
-                console.error("Error saving user data: ", error);
+            async function saveUserToFirestore(uid, displayName, email, photoURL) {
+                try {
+                    await db.collection("users").doc(uid).set({
+                        displayName: displayName,
+                        email: email,
+                        photoURL: photoURL,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                } catch (error) {
+                    console.error("Error saving user data: ", error);
+                }
             }
-        }
+
+            // ทำให้ function loginWithGoogle ใช้งานได้ใน scope ทั่วไป
+            window.loginWithGoogle = loginWithGoogle;
+        });
     </script>
 </body>
 </html>
