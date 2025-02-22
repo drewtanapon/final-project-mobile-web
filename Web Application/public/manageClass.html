@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>จัดการห้องเรียน</title>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+  <!-- QRCode.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    /* กำหนดสไตล์พื้นฐาน */
+    body {
+      font-family: 'Helvetica', 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    /* ส่วนหัวแสดงข้อมูลวิชา */
+    .header {
+      background-image: url('subject-bg.jpg'); /* รูปพื้นหลังของวิชา ควรเปลี่ยนเป็น dynamic */
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+      padding: 20px;
+    }
+    .subject-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .subject-code {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .subject-name {
+      font-size: 20px;
+      margin-top: 5px;
+    }
+    /* ปุ่มในส่วนหัว */
+    .header .buttons {
+      margin-top: 15px;
+    }
+    .header .buttons button {
+      margin-right: 10px;
+      padding: 8px 12px;
+      background-color: #007bff;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .header .buttons button:hover {
+      background-color: #0056b3;
+    }
+    /* ส่วนคอนเทนต์หลัก */
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+    }
+    /* ตารางแสดงนักเรียนที่ลงทะเบียน */
+    .student-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .student-table th, .student-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    .student-table th {
+      background-color: #007bff;
+      color: #fff;
+    }
+    /* ส่วนประวัติการเช็คชื่อ */
+    .history {
+      margin-top: 30px;
+    }
+    .history h3 {
+      margin-bottom: 10px;
+    }
+    .history ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    .history li {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    /* Modal สำหรับแสดง QR Code */
+    #qr-modal {
+      display: none;
+      position: fixed;
+      top:0;
+      left:0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+    #qr-modal .modal-content {
+      background: #fff;
+      margin: 100px auto;
+      padding: 20px;
+      width: 300px;
+      text-align: center;
+      border-radius: 8px;
+      position: relative;
+    }
+    #qr-modal .close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <!-- ส่วนหัวแสดงข้อมูลวิชา -->
+  <div class="header">
+    <div class="subject-info">
+      <div class="subject-code">
+        <p><strong>รหัสวิชา: </strong><span id="display-subjectCode"></span></p>
+      </div>
+      <div class="subject-name">
+        <p><strong>ชื่อรายวิชา: </strong><span id="display-subjectName"></span></p>
+      </div>
+    </div>
+    <div class="buttons">
+      <button id="btn-qr">แสดง QR Code</button>
+      <button id="btn-checkin">เพิ่มการเช็คชื่อ</button>
+    </div>
+  </div>
+
+  <!-- ส่วนแสดงรายละเอียดภายในห้องเรียน -->
+  <div class="container">
+    <!-- ตารางรายชื่อนักเรียนที่ลงทะเบียน -->
+    <h2>รายชื่อนักเรียนที่ลงทะเบียน</h2>
+    <table class="student-table">
+      <thead>
+        <tr>
+          <th>ลำดับ</th>
+          <th>รหัส</th>
+          <th>ชื่อ</th>
+          <th>รูปภาพ</th>
+          <th>สถานะ</th>
+        </tr>
+      </thead>
+      <tbody id="student-table-body">
+        <!-- ข้อมูลนักเรียนจะถูกเติมที่นี่ -->
+        <tr>
+          <td>1</td>
+          <td>STU001</td>
+          <td>สมชาย ใจดี</td>
+          <td><img src="" alt="student1" width="50"></td>
+          <td>Active</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- แสดงรายการประวัติการเช็คชื่อ -->
+    <div class="history">
+      <h3>ประวัติการเช็คชื่อ</h3>
+      <ul id="checkin-history">
+        <!-- รายการประวัติจะถูกเติมที่นี่ -->
+        <li>วันที่ 01/01/2025 : จำนวนผู้มา 25 คน</li>
+        <li>วันที่ 02/01/2025 : จำนวนผู้มา 24 คน</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Modal สำหรับแสดง QR Code -->
+  <div id="qr-modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeQR()">×</span>
+      <div id="qr-code">
+        <!-- QR Code จะแสดงที่นี่ -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ดึง subjectId จาก query string
+    const urlParams = new URLSearchParams(window.location.search);
+    const subjectId = urlParams.get('subjectId');
+
+    let currentUserUID = "";
+    const firebaseConfig = {
+      apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
+      authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
+      projectId: "webmobileapplication-cdaaf",
+      storageBucket: "webmobileapplication-cdaaf.appspot.com",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // ดึงข้อมูลรายวิชาจาก Firestore ด้วย subjectId
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        currentUserUID = user.uid;
+        db.collection("users")
+          .doc(currentUserUID)
+          .collection("classroom")
+          .doc(subjectId)
+          .onSnapshot((doc) => {
+            if (doc.exists) {
+              const data = doc.data();
+              document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
+              document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
+            }
+          });
+      }
+    });
+
+    // เมื่อคลิกปุ่มแสดง QR Code
+    document.getElementById("btn-qr").addEventListener("click", function(){
+      // แสดง modal สำหรับ QR Code
+      document.getElementById("qr-modal").style.display = "block";
+      // ล้าง container ก่อนสร้างใหม่ (กรณีคลิกหลายครั้ง)
+      document.getElementById("qr-code").innerHTML = "";
+      // สร้าง URL สำหรับการลงทะเบียนวิชาโดยใช้ subjectId
+      const registrationUrl = `https://yourdomain.com/register?subjectId=${subjectId}`;
+      // สร้าง QR Code ด้วย registrationUrl
+      new QRCode(document.getElementById("qr-code"), {
+        text: registrationUrl,
+        width: 128,
+        height: 128,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    });
+
+    // ฟังก์ชันปิด modal QR Code
+    function closeQR() {
+      document.getElementById("qr-modal").style.display = "none";
+    }
+
+    // เมื่อคลิกปุ่มเพิ่มการเช็คชื่อ
+    document.getElementById("btn-checkin").addEventListener("click", function(){
+      // ตัวอย่างการตั้งหมายเลขการเช็คชื่อใหม่ (cno) โดยใช้ timestamp
+      const newCno = Date.now(); 
+      const cid = "ABC123"; // ควรเปลี่ยนให้เป็นค่า dynamic จากข้อมูลห้องเรียนจริง
+
+      /* 
+         ขั้นตอน:
+         1. สร้างเอกสารใหม่ที่ path: /classroom/{cid}/checkin/{cno}
+         2. คัดลอกรายชื่อนักเรียนทั้งหมดจาก /classroom/{cid}/students ไปที่ /classroom/{cid}/checkin/{cno}/scores 
+            พร้อมกำหนดค่า status = 0 ให้กับแต่ละรายการ
+         ส่วนนี้จะต้องเชื่อมต่อกับ backend หรือใช้ Firebase API เพื่อดำเนินการ
+      */
+      
+      // ตัวอย่างแจ้งเตือนเพื่อยืนยันการสร้างการเช็คชื่อใหม่
+      alert("สร้างการเช็คชื่อใหม่: " + newCno);
+    });
+  </script>
+</body>
+</html>
