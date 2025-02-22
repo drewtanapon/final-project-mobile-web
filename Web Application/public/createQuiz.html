@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สร้างคำถาม</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: #fff;
+            text-align: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        h2 {
+            margin-bottom: 20px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+            margin-top: 10px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>สร้างคำถาม</h2>
+        <input type="text" id="questionTitle" placeholder="หัวข้อคำถาม">
+        <textarea id="questionDetail" placeholder="รายละเอียดคำถาม"></textarea>
+        <button onclick="submitQuestion()">บันทึกคำถาม</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
+            authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
+            projectId: "webmobileapplication-cdaaf",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        async function submitQuestion() {
+            const title = document.getElementById("questionTitle").value.trim();
+            const detail = document.getElementById("questionDetail").value.trim();
+            
+            if (title === "" || detail === "") {
+                alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+                return;
+            }
+            
+            try {
+                await db.collection("questions").add({
+                    title: title,
+                    detail: detail,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("บันทึกคำถามเรียบร้อย!");
+                document.getElementById("questionTitle").value = "";
+                document.getElementById("questionDetail").value = "";
+            } catch (error) {
+                console.error("Error saving question: ", error);
+            }
+        }
+    </script>
+</body>
+</html>
