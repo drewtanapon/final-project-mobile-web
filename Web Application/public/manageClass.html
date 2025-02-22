@@ -451,7 +451,10 @@
             detailDiv.appendChild(table);
 
             // ดึงข้อมูลนักเรียนจาก collection "Student"
-            db.collection("Student")
+            db.collection("users")
+            .doc(currentUserUID)
+            .collection("classroom")
+            .doc(subjectId).collection("Student")
             .get()
             .then((querySnapshot) => {
                 const tbody = document.getElementById(`studentTableBody-${doc.id}`);
@@ -509,7 +512,7 @@
         db.collection("Student").get()
           .then((querySnapshot) => {
               studentTableBody.innerHTML = ""; // ล้างข้อมูลเก่า
-
+ 
               if (querySnapshot.empty) {
                   studentTableBody.innerHTML = "<tr><td colspan='5'>ไม่มีนักเรียนลงทะเบียน</td></tr>";
                   return;
