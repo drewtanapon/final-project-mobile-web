@@ -61,7 +61,7 @@
                 currentUserUID = user.uid; // ใช้ UID เป็น Document ID
 
                 // ✅ ดึงข้อมูลแบบเรียลไทม์
-                db.collection("users").doc(currentUsierUID).onSnapshot(doc => {
+                db.collection("users").doc(currentUserUID).onSnapshot(doc => {
                     if (doc.exists) {
                         const data = doc.data();
                         document.getElementById("display-username").innerText = data.displayName || "ไม่ระบุ";
