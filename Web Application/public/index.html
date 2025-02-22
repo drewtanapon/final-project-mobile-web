@@ -13,21 +13,23 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f8ff;
-            color: #000066;
+            background: url("download (1).jfif") no-repeat center center fixed;
+            background-size: cover; /* ขยายเต็มหน้าจอ */
+            color: #2b2504;
             margin: 0;
-            padding: 20px;
+            padding: 200px;
         }
+
         .container {
             max-width: 100%;
             margin: auto;
-            background: white;
+            background: rgba(209, 243, 173, 0.642);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0px 0px 10px #888888;
         }
         h1 {
-            color: #004ef8;
+            color: #0c7209;
             text-align: center;
         }
 
@@ -38,7 +40,7 @@
             align-items: center;
             margin-bottom: 20px;
             padding: 10px;
-            border-bottom: 2px solid #ddd;
+            border-bottom: 2px solid #000000f7;
         }
 
         /* จัดให้รูปโปรไฟล์และข้อมูลอยู่ซ้ายสุด */
@@ -69,8 +71,8 @@
         }
 
         button {
-            background-color: #0000cc;
-            color: white;
+            background-color: #543e1ef0;
+            color: rgb(255, 255, 255);
             border: none;
             padding: 10px 15px;
             cursor: pointer;
@@ -79,7 +81,7 @@
         }
 
         button:hover {
-            background-color: #000099;
+            background-color: #664a29;
         }
         /* ปรับตำแหน่งปุ่ม "เพิ่มวิชา" ให้อยู่ขวาสุด */
         .add-subject-container {
@@ -88,7 +90,7 @@
         }
 
         .add-subject {
-            background-color: #008000;
+            background-color: #118311;
         }
 
         .subject-list {
@@ -96,6 +98,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            color: rgb(218, 218, 218);
         }
 
         .subject-list ul {
@@ -105,7 +108,7 @@
         }
 
         .subject-list li {
-            background: #e0ebff;
+            background: #4d3f1cc2;
             padding: 10px;
             margin: 5px 0;
             border-radius: 5px;
@@ -115,11 +118,11 @@
         }
 
         .manage-classroom button {
-            background-color: #ff8c00;
+            background-color: #837d76;
         }
 
         .manage-classroom button:hover {
-            background-color: #e07b00;
+            background-color: #959492;
         }
 
         .profile-img {
@@ -253,7 +256,9 @@
                         <span>${subjectData.code} - ${subjectData.name}</span>
                         <button onclick="manageClass('${doc.id}')">จัดการห้องเรียน</button>
                     `;
+                    
                     subjectList.appendChild(li);
+                    
                 });
             });
     }
