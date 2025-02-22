@@ -23,7 +23,7 @@
       background-image: url('subject-bg.jpg'); /* รูปพื้นหลังของวิชา ควรเปลี่ยนเป็น dynamic */
       background-size: cover;
       background-position: center;
-      color: #fff;
+      color: #000000;
       padding: 20px;
     }
     .subject-info {
@@ -122,6 +122,58 @@
       cursor: pointer;
       font-size: 18px;
     }
+    /* Modal สำหรับเพิ่มการเช็คชื่อ */
+    #checkin-modal {
+      display: none;
+      position: fixed;
+      top:0;
+      left:0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+    #checkin-modal .modal-content {
+      background: #fff;
+      margin: 100px auto;
+      padding: 20px;
+      width: 400px;
+      border-radius: 8px;
+      position: relative;
+    }
+    #checkin-modal .modal-content h3 {
+      margin-top: 0;
+    }
+    #checkin-modal .close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    /* สไตล์ฟอร์มใน Modal */
+    #checkin-form-modal div {
+      margin-bottom: 10px;
+    }
+    #checkin-form-modal label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    #checkin-form-modal input {
+      width: 100%;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+    #checkin-form-modal button {
+      padding: 8px 12px;
+      background-color: #28a745;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #checkin-form-modal button:hover {
+      background-color: #218838;
+    }
   </style>
 </head>
 <body>
@@ -138,6 +190,7 @@
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
       <button id="btn-checkin">เพิ่มการเช็คชื่อ</button>
+      <button id="btn-check-in" onclick ="toCheckin()" >Check-in</button>
       <button id="btn-createq" onclick="toggleCreateQiuz()">สร้างคำถาม</button>
     </div>
   </div>
@@ -173,8 +226,7 @@
       <h3>ประวัติการเช็คชื่อ</h3>
       <ul id="checkin-history">
         <!-- รายการประวัติจะถูกเติมที่นี่ -->
-        <li>วันที่ 01/01/2025 : จำนวนผู้มา 25 คน</li>
-        <li>วันที่ 02/01/2025 : จำนวนผู้มา 24 คน</li>
+        <li id="checkin-list"></li>
       </ul>
     </div>
   </div>
@@ -186,6 +238,33 @@
       <div id="qr-code">
         <!-- QR Code จะแสดงที่นี่ -->
       </div>
+    </div>
+  </div>
+
+  <!-- Modal สำหรับเพิ่มการเช็คชื่อ -->
+  <div id="checkin-modal">
+    <div class="modal-content">
+      <span class="close" id="close-checkin-modal">×</span>
+      <h3>สร้างการเช็คชื่อใหม่</h3>
+      <form id="checkin-form-modal">
+        <div>
+          <label>รหัสเช็คชื่อ:</label>
+          <input type="text" id="modal-checkin-code" required>
+        </div>
+        <div>
+          <label>วันเวลาเริ่มเช็คชื่อ:</label>
+          <input type="datetime-local" id="modal-start-time" required>
+        </div>
+        <div>
+          <label>วันเวลาถือว่าสาย:</label>
+          <input type="datetime-local" id="modal-late-time" required>
+        </div>
+        <div>
+          <label>วันเวลาปิดการเช็คชื่อ:</label>
+          <input type="datetime-local" id="modal-close-time" required>
+        </div>
+        <button type="submit">บันทึก</button>
+      </form>
     </div>
   </div>
 
@@ -209,6 +288,7 @@
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         currentUserUID = user.uid;
+
         db.collection("users")
           .doc(currentUserUID)
           .collection("classroom")
@@ -219,7 +299,12 @@
               document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
               document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
             }
-          });
+        });
+        // ✅ โหลดรายการเช็คชื่อ หลังจากที่ currentUserUID ได้ค่าแล้ว
+        loadCheck();
+        loadStudent();
+      }else {
+        console.log("ผู้ใช้ยังไม่ได้ล็อกอิน");
       }
     });
 
@@ -254,21 +339,201 @@
     // ฟังก์ชันสำหรับเพิ่มการเช็คชื่อ
     // เมื่อคลิกปุ่มเพิ่มการเช็คชื่อ
     document.getElementById("btn-checkin").addEventListener("click", function(){
-      // ตัวอย่างการตั้งหมายเลขการเช็คชื่อใหม่ (cno) โดยใช้ timestamp
-      const newCno = Date.now(); 
-      const cid = "ABC123"; // ควรเปลี่ยนให้เป็นค่า dynamic จากข้อมูลห้องเรียนจริง
-
-      /* 
-         ขั้นตอน:
-         1. สร้างเอกสารใหม่ที่ path: /classroom/{cid}/checkin/{cno}
-         2. คัดลอกรายชื่อนักเรียนทั้งหมดจาก /classroom/{cid}/students ไปที่ /classroom/{cid}/checkin/{cno}/scores 
-            พร้อมกำหนดค่า status = 0 ให้กับแต่ละรายการ
-         ส่วนนี้จะต้องเชื่อมต่อกับ backend หรือใช้ Firebase API เพื่อดำเนินการ
-      */
-      
-      // ตัวอย่างแจ้งเตือนเพื่อยืนยันการสร้างการเช็คชื่อใหม่
-      alert("สร้างการเช็คชื่อใหม่: " + newCno);
+      document.getElementById("checkin-modal").style.display = "block";
     });
+
+    // เมื่อคลิกปุ่มปิดใน Modal การเช็คชื่อ
+    document.getElementById("close-checkin-modal").addEventListener("click", function(){
+      document.getElementById("checkin-modal").style.display = "none";
+    });
+
+    // จัดการการส่งฟอร์มใน Modal สำหรับสร้างเช็คชื่อใหม่
+    document.getElementById("checkin-form-modal").addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const checkinCode = document.getElementById("modal-checkin-code").value;
+      const startTime = new Date(document.getElementById("modal-start-time").value).getTime();
+      const lateTime = new Date(document.getElementById("modal-late-time").value).getTime();
+      const closeTime = new Date(document.getElementById("modal-close-time").value).getTime();
+
+      // สร้างเอกสารใหม่ที่ path: /classroom/{cid}/checkin/{checkinCode}
+      db.collection("users").doc(currentUserUID).collection("classroom").doc(subjectId).collection("checkin").doc(checkinCode).set({
+        checkinCode: checkinCode,
+        startTime: startTime,
+        lateTime: lateTime,
+        closeTime: closeTime,
+        createdAt: Date.now()
+      }).then(() => {
+        alert("สร้างการเช็คชื่อสำเร็จ!");
+        document.getElementById("checkin-modal").style.display = "none";
+
+        // ขั้นตอนคัดลอกรายชื่อนักเรียนจาก /classroom/{cid}/students
+        // ไปยัง /classroom/{cid}/checkin/{checkinCode}/scores โดยกำหนด status = 0
+        db.collection("classroom").doc(cid).collection("students").get().then((querySnapshot) => {
+          querySnapshot.forEach((doc) => {
+            const studentData = doc.data();
+            db.collection("classroom").doc(cid).collection("checkin").doc(checkinCode)
+              .collection("scores").doc(doc.id).set({
+                status: 0,
+                studentName: studentData.name || ""
+              });
+          });
+        }).catch((error) => {
+          console.error("เกิดข้อผิดพลาดในการคัดลอกรายชื่อนักเรียน: ", error);
+        });
+      }).catch((error) => {
+        console.error("เกิดข้อผิดพลาดในการสร้างเช็คชื่อ: ", error);
+      });
+    });
+    function loadCheck(userId) {
+    const CheckList = document.getElementById("checkin-list");
+    CheckList.innerHTML = "<li>กำลังโหลดข้อมูล...</li>";
+
+    if (!currentUserUID || !subjectId) {
+        console.error("currentUserUID หรือ subjectId ไม่มีค่า");
+        return;
+    }
+
+    db.collection("users")
+        .doc(currentUserUID)
+        .collection("classroom")
+        .doc(subjectId)
+        .collection("checkin")
+        .orderBy("createdAt", "desc")
+        .onSnapshot((querySnapshot) => {
+        // ล้างข้อมูลเก่าใน CheckList
+        CheckList.innerHTML = "";
+
+        // กรณีไม่มีข้อมูล
+        if (querySnapshot.empty) {
+            CheckList.innerHTML = "<li>ไม่มีรายการเช็คชื่อ</li>";
+            return;
+        }
+
+        // สร้าง <ol> สำหรับเก็บรายการเช็คชื่อ
+        const ol = document.createElement("ol");
+
+        // วนลูปเอกสารใน collection
+        querySnapshot.forEach((doc) => {
+            const checkData = doc.data();
+            console.log("ข้อมูลที่โหลด: ", checkData);
+
+            // สร้าง <li> สำหรับแต่ละเอกสาร
+            const li = document.createElement("li");
+            // เนื้อหาหลักที่จะแสดงเสมอ (Title ของแต่ละรายการ)
+            li.textContent = `${new Date(checkData.startTime).toLocaleString()} - ${checkData.checkinCode}`;
+
+            // สร้าง element สำหรับข้อมูลเพิ่มเติม (Dropdown)
+            const detailDiv = document.createElement("div");
+            // ซ่อนข้อมูลเพิ่มเติมไว้ก่อน
+            detailDiv.style.display = "none";
+            detailDiv.style.marginTop = "5px";
+            detailDiv.style.paddingLeft = "20px";
+            const table = document.createElement("table");
+            table.style.width = "100%";
+            table.style.borderCollapse = "collapse";
+            table.innerHTML = `
+            <thead>
+                <tr>
+                <th style="border: 1px solid #ddd; padding: 8px;">ลำดับ</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">เลขประจำตัว</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">ชื่อ</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">สถานะ</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">หมายเหตุ</th>
+                </tr>
+            </thead>
+            <tbody id="studentTableBody-${doc.id}">
+                <tr>
+                <td colspan="2" style="border: 1px solid #ddd; padding: 8px;">กำลังโหลดข้อมูล...</td>
+                </tr>
+            </tbody>
+            `;
+            detailDiv.appendChild(table);
+
+            // ดึงข้อมูลนักเรียนจาก collection "Student"
+            db.collection("Student")
+            .get()
+            .then((querySnapshot) => {
+                const tbody = document.getElementById(`studentTableBody-${doc.id}`);
+                tbody.innerHTML = ""; // ล้างข้อมูลเก่า
+
+                if (querySnapshot.empty) {
+                tbody.innerHTML = "<tr><td colspan='2' style='border: 1px solid #ddd; padding: 8px;'>ไม่มีนักเรียนลงทะเบียน</td></tr>";
+                return;
+                }
+
+                let index = 1;
+                querySnapshot.forEach((studentDoc) => {
+                const studentData = studentDoc.data();
+                console.log("ข้อมูลนักเรียนที่โหลด: ", studentData);
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td style="border: 1px solid #ddd; padding: 8px;">${index++}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${studentData.sid || "ไม่มีชื่อ"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${studentData.name || "ไม่มีชื่อ"}</td>
+                `;
+                tbody.appendChild(tr);
+                });
+            })
+            .catch((error) => {
+                console.error("Error fetching student data:", error);
+            });
+
+            // เมื่อคลิกที่ <li> ให้สลับการแสดง/ซ่อน dropdown (detailDiv)
+            li.addEventListener("click", () => {
+            detailDiv.style.display = detailDiv.style.display === "none" ? "block" : "none";
+            });
+
+            // นำ detailDiv (Dropdown) ไปแนบกับ <li>
+            li.appendChild(detailDiv);
+            // ใส่ <li> ลงใน <ol>
+            ol.appendChild(li);
+        });
+
+        // นำ <ol> ที่สร้างเสร็จแล้วไปใส่ใน CheckList
+        CheckList.appendChild(ol);
+        });
+    }
+
+
+    // ✅ โหลดรายชื่อนักเรียน
+    function loadStudent() {
+        const studentTableBody = document.getElementById("student-table-body");
+        studentTableBody.innerHTML = "<tr><td colspan='5'>กำลังโหลดข้อมูล...</td></tr>";
+
+        if (!currentUserUID || !subjectId) {
+            console.error("currentUserUID หรือ subjectId ไม่มีค่า");
+            return;
+        }
+
+        db.collection("Student").get()
+          .then((querySnapshot) => {
+              studentTableBody.innerHTML = ""; // ล้างข้อมูลเก่า
+
+              if (querySnapshot.empty) {
+                  studentTableBody.innerHTML = "<tr><td colspan='5'>ไม่มีนักเรียนลงทะเบียน</td></tr>";
+                  return;
+              }
+
+              let index = 1;
+              querySnapshot.forEach((doc) => {
+                  const studentData = doc.data();
+                  console.log("ข้อมูลนักเรียนที่โหลด: ", studentData);
+
+                  // สร้างแถวของนักเรียน
+                  const tr = document.createElement("tr");
+                  tr.innerHTML = `
+                      <td>${index++}</td>
+                      <td>${studentData.name || "ไม่มีชื่อ"}</td>
+                  `;
+                  studentTableBody.appendChild(tr);
+              });
+          });
+    }
+    function toCheckin(subjectId) {
+        window.location.href = `check-in.html?subjectId=${subjectId}`;
+    }
+
   </script>
 </body>
 </html>
