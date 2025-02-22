@@ -7,114 +7,72 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
+    
     <style>
         body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
             font-family: Arial, sans-serif;
-            background-color: #f0f8ff;
-            color: #02020b;
+            background: linear-gradient(135deg);
+            color: #fff;
             text-align: center;
-            padding: 20px;
+            height: 100vh;
             margin: 0;
         }
         .container {
             max-width: 400px;
-            margin: auto;
-            background: rgb(255, 255, 255);
+            background: rgba(255, 255, 255, 0.2);
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0px 0px 10px #888888;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
         }
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        h2 {
+            color: #020000;
+            margin-bottom: 20px;
         }
         button {
-            background-color: #0606d4;
+            background-color: #ff4d4d;
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 12px;
             cursor: pointer;
             border-radius: 5px;
             width: 100%;
-            margin-top: 5px;
+            margin-top: 10px;
+            font-size: 16px;
+            transition: 0.3s;
         }
         button:hover {
-            background-color: #000099;
+            background-color: #cc0000;
         }
         .google-btn {
-            background-color: #dd4b39;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background-color: #db4437;
         }
         .google-btn:hover {
             background-color: #c23321;
         }
-        .otp-btn {
-            background-color: #008000;
-        }
-        .otp-btn:hover {
-            background-color: #006400;
-        }
-        .error {
-            color: red;
-            margin-top: 10px;
-        }
-        #recaptcha-container {
-            margin-top: 10px;
-        }
-
-        .google-btn {
-        background-color: #c10101;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        padding: 10px;
-        border-radius: 5px;
-        cursor: pointer;
-        border: none;
-        width: 100%;
-        margin-top: 5px;
-        }
-
-        .google-btn:hover {
-        background-color: #c23321;
-        }
-
         .google-logo {
-        width: 20px;
-        height: 20px;
+            width: 20px;
+            height: 20px;
         }
-
     </style>
 </head>
 <body>
     <div class="container">
         <h2>เข้าสู่ระบบ</h2>
-
-        <!-- Login with Email/Password -->
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Password">
-        <button onclick="login()">Login</button>
-
-         <!-- Login with Google -->
         <button class="google-btn" onclick="loginWithGoogle()">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" class="google-logo">
-        Login with Google
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" class="google-logo">
+            เข้าสู่ระบบด้วย Google
         </button>
-        <!-- Login with Phone OTP -->
-        <button class="otp-btn" onclick="goToOTP()">Login with Phone OTP</button>
-
-        <!-- Register  -->
-        <button class="regiter-btn" onclick="GotoRegis()">Register</button>
     </div>
 
     <script>
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
             authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
@@ -123,26 +81,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Login with Email/Password
-        function login() {
-            const email = document.getElementById("email").value.trim();
-            const password = document.getElementById("password").value.trim();
-
-            if (email === "" || password === "") {
-                alert("กรุณากรอก Email และ Password");
-                return;
-            }
-
-            firebase.auth().signInWithEmailAndPassword(email, password)
-                .then(() => {
-                    window.location.href = "index.html";
-                })
-                .catch((error) => {
-                    alert(error.message);
-                });
-        }
-
-        // Login with Google and Save to Firestore
         async function loginWithGoogle() {
             try {
                 const provider = new firebase.auth.GoogleAuthProvider();
@@ -150,78 +88,30 @@
                 const user = result.user;
 
                 if (user) {
-                    console.log("✅ User logged in:", user);
-
-                    // ดึงข้อมูลจาก Google
                     const uid = user.uid;
                     const displayName = user.displayName || "ไม่ระบุ";
                     const email = user.email || "-";
-                    const photoURL = user.photoURL || ""; // ดึงรูปโปรไฟล์
-
-                    // 🔥 บันทึกข้อมูลไปยัง Firestore ทันที
+                    const photoURL = user.photoURL || "";
+                    
                     await saveUserToFirestore(uid, displayName, email, photoURL);
-
-                    // ✅ เปลี่ยนหน้าเมื่อบันทึกข้อมูลเสร็จ
                     window.location.href = "index.html";
                 }
             } catch (error) {
-                console.error("❌ Error during Google Login:", error);
                 alert(error.message);
             }
         }
 
-        // 📌 ฟังก์ชันบันทึกข้อมูลลง Firestore
         async function saveUserToFirestore(uid, displayName, email, photoURL) {
             try {
                 await db.collection("users").doc(uid).set({
                     displayName: displayName,
                     email: email,
-                    photoURL: photoURL, // บันทึกภาพโปรไฟล์
+                    photoURL: photoURL,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true }); // ✅ merge เพื่อป้องกันการเขียนทับข้อมูลเดิม
-
-                console.log("✅ User data saved to Firestore instantly");
+                }, { merge: true });
             } catch (error) {
-                console.error("❌ Error saving user data to Firestore:", error);
+                console.error("Error saving user data: ", error);
             }
-        }
-
-        // Firebase Phone Authentication (OTP)
-        let confirmationResult;
-
-        function sendOTP() {
-            const phoneNumber = document.getElementById("phone").value.trim();
-
-            if (!phoneNumber) {
-                alert("กรุณากรอกหมายเลขโทรศัพท์");
-                return;
-            }
-
-            // Setup Recaptcha
-            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-                'size': 'normal',
-                'callback': function(response) {
-                    console.log("Recaptcha verified");
-                }
-            });
-
-            const appVerifier = window.recaptchaVerifier;
-            firebase.auth().signInWithPhoneNumber(phoneNumber, appVerifier)
-                .then((result) => {
-                    confirmationResult = result;
-                    alert("OTP ถูกส่งไปยังหมายเลขของคุณแล้ว");
-                })
-                .catch((error) => {
-                    alert(error.message);
-                });
-        }
-
-        function goToOTP() {
-            window.location.href = "otp.html";
-        }
-
-        function GotoRegis(){
-            window.location.href = "Register.html";
         }
     </script>
 </body>

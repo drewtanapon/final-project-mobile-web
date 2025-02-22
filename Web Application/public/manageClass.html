@@ -32,10 +32,12 @@
       align-items: flex-start;
     }
     .subject-code {
+      color: #000000;
       font-size: 24px;
       font-weight: bold;
     }
     .subject-name {
+      color: #000000;
       font-size: 20px;
       margin-top: 5px;
     }
@@ -188,6 +190,7 @@
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
       <button id="btn-checkin">เพิ่มการเช็คชื่อ</button>
+      <button id="btn-createq" onclick="toggleCreateQiuz()">สร้างคำถาม</button>
     </div>
   </div>
 
@@ -328,7 +331,12 @@
       document.getElementById("qr-modal").style.display = "none";
     }
 
-    // เมื่อคลิกปุ่มเพิ่มการเช็คชื่อ จะแสดง Modal สำหรับสร้างเช็คชื่อ
+    function toggleCreateQiuz(){
+      window.location.href = "createQuiz.html";
+    }
+
+    // ฟังก์ชันสำหรับเพิ่มการเช็คชื่อ
+    // เมื่อคลิกปุ่มเพิ่มการเช็คชื่อ
     document.getElementById("btn-checkin").addEventListener("click", function(){
       document.getElementById("checkin-modal").style.display = "block";
     });
