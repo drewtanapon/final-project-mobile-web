@@ -190,6 +190,7 @@
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
       <button id="btn-checkin">เพิ่มการเช็คชื่อ</button>
+      <button id="btn-check-in" onclick ="toCheckin()" >Check-in</button>
       <button id="btn-createq" onclick="toggleCreateQiuz()">สร้างคำถาม</button>
     </div>
   </div>
@@ -528,6 +529,9 @@
                   studentTableBody.appendChild(tr);
               });
           });
+    }
+    function toCheckin(subjectId) {
+        window.location.href = `check-in.html?subjectId=${subjectId}`;
     }
 
   </script>
