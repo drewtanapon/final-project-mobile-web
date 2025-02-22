@@ -67,7 +67,9 @@
                         document.getElementById("display-username").innerText = data.displayName || "ไม่ระบุ";
                         document.getElementById("display-email").innerText = data.email || user.email; // ใช้อีเมลจาก Firebase Auth
                         document.getElementById("display-phone").innerText = data.phone;
-                        document.getElementById("profile-pic").src = data.photoURL || "imageprofiledefault.jpg";
+
+                        const profilePic = document.getElementById("profile-pic");
+                        profilePic.src = data.photoURL ? data.photoURL : "imageprofiledefault.jpg"; // ✅ ใช้รูปเริ่มต้นถ้าไม่มี
                     }
                 });
             } else {
@@ -101,8 +103,8 @@
             try {
                 if (file) {
                     const storageRef = storage.ref(`profile_pictures/${currentUserUID}`);
-                    await storageRef.put(file);
-                    const url = await storageRef.getDownloadURL();
+                    const snapshot = await storageRef.put(file);
+                    const url = await snapshot.getDownloadURL();
                     updateData.profilePic = url;
                 }
 
