@@ -384,37 +384,117 @@
         console.error("เกิดข้อผิดพลาดในการสร้างเช็คชื่อ: ", error);
       });
     });
-    // ✅ โหลดรายการเช็คชื่อ
     function loadCheck(userId) {
-        const CheckList = document.getElementById("checkin-list");
-        CheckList.innerHTML = "<li>กำลังโหลดข้อมูล...</li>";
+    const CheckList = document.getElementById("checkin-list");
+    CheckList.innerHTML = "<li>กำลังโหลดข้อมูล...</li>";
 
-        if (!currentUserUID || !subjectId) {
+    if (!currentUserUID || !subjectId) {
         console.error("currentUserUID หรือ subjectId ไม่มีค่า");
         return;
+    }
+
+    db.collection("users")
+        .doc(currentUserUID)
+        .collection("classroom")
+        .doc(subjectId)
+        .collection("checkin")
+        .orderBy("createdAt", "desc")
+        .onSnapshot((querySnapshot) => {
+        // ล้างข้อมูลเก่าใน CheckList
+        CheckList.innerHTML = "";
+
+        // กรณีไม่มีข้อมูล
+        if (querySnapshot.empty) {
+            CheckList.innerHTML = "<li>ไม่มีรายการเช็คชื่อ</li>";
+            return;
         }
-    
-        db.collection("users").doc(currentUserUID).collection("classroom").doc(subjectId).collection("checkin")
-            .orderBy("createdAt", "desc")
-            .onSnapshot((querySnapshot) => {
-              CheckList.innerHTML = ""; // ล้างข้อมูลเก่า
+
+        // สร้าง <ol> สำหรับเก็บรายการเช็คชื่อ
+        const ol = document.createElement("ol");
+
+        // วนลูปเอกสารใน collection
+        querySnapshot.forEach((doc) => {
+            const checkData = doc.data();
+            console.log("ข้อมูลที่โหลด: ", checkData);
+
+            // สร้าง <li> สำหรับแต่ละเอกสาร
+            const li = document.createElement("li");
+            // เนื้อหาหลักที่จะแสดงเสมอ (Title ของแต่ละรายการ)
+            li.textContent = `${new Date(checkData.startTime).toLocaleString()} - ${checkData.checkinCode}`;
+
+            // สร้าง element สำหรับข้อมูลเพิ่มเติม (Dropdown)
+            const detailDiv = document.createElement("div");
+            // ซ่อนข้อมูลเพิ่มเติมไว้ก่อน
+            detailDiv.style.display = "none";
+            detailDiv.style.marginTop = "5px";
+            detailDiv.style.paddingLeft = "20px";
+            const table = document.createElement("table");
+            table.style.width = "100%";
+            table.style.borderCollapse = "collapse";
+            table.innerHTML = `
+            <thead>
+                <tr>
+                <th style="border: 1px solid #ddd; padding: 8px;">ลำดับ</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">เลขประจำตัว</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">ชื่อ</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">สถานะ</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">หมายเหตุ</th>
+                </tr>
+            </thead>
+            <tbody id="studentTableBody-${doc.id}">
+                <tr>
+                <td colspan="2" style="border: 1px solid #ddd; padding: 8px;">กำลังโหลดข้อมูล...</td>
+                </tr>
+            </tbody>
+            `;
+            detailDiv.appendChild(table);
+
+            // ดึงข้อมูลนักเรียนจาก collection "Student"
+            db.collection("Student")
+            .get()
+            .then((querySnapshot) => {
+                const tbody = document.getElementById(`studentTableBody-${doc.id}`);
+                tbody.innerHTML = ""; // ล้างข้อมูลเก่า
+
                 if (querySnapshot.empty) {
-                  CheckList.innerHTML = "<li>ไม่มีรายวิชา</li>";
-                    return;
+                tbody.innerHTML = "<tr><td colspan='2' style='border: 1px solid #ddd; padding: 8px;'>ไม่มีนักเรียนลงทะเบียน</td></tr>";
+                return;
                 }
 
-                querySnapshot.forEach((doc) => {
-                    const checkData = doc.data();
-                    console.log("ข้อมูลที่โหลด: ", checkData);
-                    
-                    const li = document.createElement("li");
-                    li.innerHTML = `
-                        <span>${new Date(checkData.startTime).toLocaleString()} - ${checkData.checkinCode}</span>
-                    `;
-                    CheckList.appendChild(li);
+                let index = 1;
+                querySnapshot.forEach((studentDoc) => {
+                const studentData = studentDoc.data();
+                console.log("ข้อมูลนักเรียนที่โหลด: ", studentData);
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td style="border: 1px solid #ddd; padding: 8px;">${index++}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${studentData.sid || "ไม่มีชื่อ"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${studentData.name || "ไม่มีชื่อ"}</td>
+                `;
+                tbody.appendChild(tr);
                 });
+            })
+            .catch((error) => {
+                console.error("Error fetching student data:", error);
             });
+
+            // เมื่อคลิกที่ <li> ให้สลับการแสดง/ซ่อน dropdown (detailDiv)
+            li.addEventListener("click", () => {
+            detailDiv.style.display = detailDiv.style.display === "none" ? "block" : "none";
+            });
+
+            // นำ detailDiv (Dropdown) ไปแนบกับ <li>
+            li.appendChild(detailDiv);
+            // ใส่ <li> ลงใน <ol>
+            ol.appendChild(li);
+        });
+
+        // นำ <ol> ที่สร้างเสร็จแล้วไปใส่ใน CheckList
+        CheckList.appendChild(ol);
+        });
     }
+
+
     // ✅ โหลดรายชื่อนักเรียน
     function loadStudent() {
         const studentTableBody = document.getElementById("student-table-body");
