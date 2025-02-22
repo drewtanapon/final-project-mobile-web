@@ -273,6 +273,8 @@
     const urlParams = new URLSearchParams(window.location.search);
     const subjectId = urlParams.get('subjectId');
 
+    console.log(subjectId);
+
     let currentUserUID = "";
     const firebaseConfig = {
       apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
@@ -333,7 +335,7 @@
     }
 
     function toggleCreateQiuz(){
-      window.location.href = "createQuiz.html";
+      window.location.href = `createQuiz.html?subjectId=${subjectId}`;
     }
 
     // ฟังก์ชันสำหรับเพิ่มการเช็คชื่อ
