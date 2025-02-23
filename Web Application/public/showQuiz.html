@@ -239,6 +239,16 @@
     #checkin-form-modal button:hover {
       background-color: #218838;
     }
+    #btn-create{
+      margin-right: 10px;
+      padding: 8px 12px;
+      background-color: #007bff;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      
+    }
     </style>
 </head>
 <body>
@@ -278,8 +288,8 @@
                 <tr><td colspan="3">กำลังโหลดข้อมูล...</td></tr>
             </tbody>
         </table>
-        <button onclick="toggleCreateQuiz()">สร้างคำถาม</button>
-        <button onclick="toggleForback()" >ย้อนกลับ</button>
+        <button id="btn-create" onclick="toggleCreateQuiz()">สร้างคำถาม</button>
+
     </div>
 
     <script>
@@ -295,49 +305,36 @@
         const db = firebase.firestore();
 
         firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                const userId = user.uid;
-                db.collection("users")
-                    .doc(userId)
-                    .collection("classroom")
-                    .doc(subjectId)
-                    .collection("question")
-                    .orderBy("question_no", "asc") // ✅ เรียงตาม question_no
-                    .get()
-                    .then(snapshot => {
-                        const questionList = document.getElementById("questionList");
-                        questionList.innerHTML = "";
+          if (user) {
+            currentUserUID = user.uid;
 
-                        if (snapshot.empty) {
-                            questionList.innerHTML = `<tr><td colspan="3">ไม่มีคำถาม</td></tr>`;
-                            return;
-                        }
-
-                        snapshot.forEach(doc => {
-                            const data = doc.data();
-                            const row = `<tr>
-                                <td>${data.question_no}</td>
-                                <td>${data.question_text}</td>
-                                <td>${data.question_show ? '✅' : '❌'}</td>
-                            </tr>`;
-                            questionList.innerHTML += row;
-                        });
-                    })
-                    .catch(error => console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error));
-            } else {
-                alert("กรุณาเข้าสู่ระบบก่อน");
-                window.location.href = "login.html";
-            }
+            db.collection("users")
+              .doc(currentUserUID)
+              .collection("classroom")
+              .doc(subjectId)
+              .onSnapshot((doc) => {
+                if (doc.exists) {
+                  const data = doc.data();
+                  document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
+                  document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
+                  // ✅ อัปเดต background-image ของ header
+                  if (data.photo) {
+                    document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
+                  }
+                }
+            });
+            // ✅ โหลดรายการเช็คชื่อ หลังจากที่ currentUserUID ได้ค่าแล้ว
+            loadStudent();
+          }else {
+            console.log("ผู้ใช้ยังไม่ได้ล็อกอิน");
+          }
         });
 
         function toggleCreateQuiz(){
             window.location.href = `createQuiz.html?subjectId=${subjectId}`;
         }
 
-        function toggleForback(){
-            window.location.href = `manageClass.html?subjectId=${subjectId}`;
-        }
-
+        
         function toggleCheck(){
          window.location.href = `checkin.html?subjectId=${subjectId}`;
         }
