@@ -407,6 +407,15 @@
     });
     let unsubscribeCheckin = null;
 
+    function toggleCheck(){
+      window.location.href = `checkin.html?subjectId=${subjectId}`;
+    }
+
+    function toQiuz(){
+      window.location.href = `showQuiz.html?subjectId=${subjectId}`;
+    }
+
+
     function loadCheck() {
       console.log("Loading check-in data");  // ตรวจสอบว่าฟังก์ชันถูกเรียกกี่ครั้ง
 
