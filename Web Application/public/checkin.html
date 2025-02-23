@@ -10,6 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
     <!-- QRCode.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
   <style>
     /* กำหนดสไตล์พื้นฐาน */
     body {
@@ -93,6 +94,8 @@
       color: #fff;
       border-radius: 4px;
       cursor: pointer;
+      display: flex;
+      justify-content: flex-start;
     }
     .header .buttons button:hover {
       background-color: #0056b3;
@@ -242,6 +245,17 @@
     #checkin-form-modal button:hover {
       background-color: #218838;
     }
+    #btn-back{
+      margin-right: 10px;
+      padding: 8px 12px;
+      background-color: #007bff;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: auto;;
+
+    }
   </style>
 </head>
 <body>
@@ -257,6 +271,16 @@
     </div>
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
+      <button id="btn-back" onclick="goBack()">กลับไปหน้าหลัก</button>
+    </div>
+  </div>
+  <!-- Modal สำหรับแสดง QR Code -->
+  <div id="qr-modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeQR()">×</span>
+      <div id="qr-code">
+        <!-- QR Code จะแสดงที่นี่ -->
+      </div>
     </div>
   </div>
 
@@ -310,10 +334,17 @@
 
   <script>
     // ดึง subjectId จาก query string
-    const urlParams = new URLSearchParams(window.location.search);
-    const subjectId = urlParams.get('subjectId');
+    let urlParams = new URLSearchParams(window.location.search);
+    let subjectId = urlParams.get('subjectId') || sessionStorage.getItem('subjectId');
 
     console.log(subjectId);
+    // ถ้า subjectId ไม่มีค่า ให้ดึงจาก sessionStorage
+    if (!subjectId) {
+        console.error("❌ ไม่พบ subjectId");
+    } else {
+        console.log("✅ subjectId:", subjectId);
+        sessionStorage.setItem('subjectId', subjectId); // เก็บค่าไว้ใช้ในหน้าอื่น
+    }
 
     let currentUserUID = "";
     const firebaseConfig = {
@@ -583,6 +614,33 @@
           }
         });
     }
+
+    document.getElementById("btn-qr").addEventListener("click", function(){
+      // แสดง modal สำหรับ QR Code
+      document.getElementById("qr-modal").style.display = "block";
+      // ล้าง container ก่อนสร้างใหม่ (กรณีคลิกหลายครั้ง)
+      document.getElementById("qr-code").innerHTML = "";
+      // สร้าง URL สำหรับการลงทะเบียนวิชาโดยใช้ subjectId
+      const registrationUrl = `https://yourdomain.com/register?subjectId=${subjectId}`;
+      // สร้าง QR Code ด้วย registrationUrl
+      new QRCode(document.getElementById("qr-code"), {
+        text: registrationUrl,
+        width: 128,
+        height: 128,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    });
+
+    function closeQR() {
+      document.getElementById("qr-modal").style.display = "none";
+    }
+
+    function goBack(){
+      window.location.href = `index.html`;
+    }
+
   </script>
 </body>
 </html>

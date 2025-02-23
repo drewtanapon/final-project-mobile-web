@@ -7,6 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
       /* กำหนดสไตล์พื้นฐาน */
       body {
@@ -225,6 +226,19 @@
     </div>
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
+      <button id="btn-back" onclick="goBack()">กลับไปหน้าหลัก</button>
+    </div>
+
+
+  </div>
+
+  <!-- Modal สำหรับแสดง QR Code -->
+  <div id="qr-modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeQR()">×</span>
+      <div id="qr-code">
+        <!-- QR Code จะแสดงที่นี่ -->
+      </div>
     </div>
   </div>
 
@@ -233,7 +247,7 @@
   <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
   <a href="#" onclick="toggleManage()">จัดการนักเรียน</a>
   <a href="#" onclick="toggleCheck()">เช็คชื่อ</a>
-  <a href="showQuiz.html?subjectId=${subjectId}" onclick="toQiuz()">คำถาม</a>
+  <a href="#" class="active">คำถาม</a>
 </div>
     <div class="container">
         <h2>รายการคำถาม</h2>
@@ -270,23 +284,60 @@
             currentUserUID = user.uid;
 
             db.collection("users")
-              .doc(currentUserUID)
-              .collection("classroom")
-              .doc(subjectId)
-              .onSnapshot((doc) => {
-                if (doc.exists) {
-                  const data = doc.data();
-                  document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
-                  document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
-                  // ✅ อัปเดต background-image ของ header
-                  if (data.photo) {
-                    document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
-                  }
-                }
-            });
-          }else {
-            console.log("ผู้ใช้ยังไม่ได้ล็อกอิน");
-          }
+          .doc(currentUserUID)
+          .collection("classroom")
+          .doc(subjectId)
+          .onSnapshot((doc) => {
+            if (doc.exists) {
+              const data = doc.data();
+              document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
+              document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
+              // ✅ อัปเดต background-image ของ header
+              if (data.photo) {
+                document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
+              }
+            }
+        });
+        // ✅ โหลดรายการเช็คชื่อ หลังจากที่ currentUserUID ได้ค่าแล้ว
+        loadStudent();
+      }else {
+        console.log("ผู้ใช้ยังไม่ได้ล็อกอิน");
+      }
+    });
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                const userId = user.uid;
+                db.collection("users")
+                    .doc(userId)
+                    .collection("classroom")
+                    .doc(subjectId)
+                    .collection("question")
+                    .orderBy("question_no", "asc") // ✅ เรียงตาม question_no
+                    .get()
+                    .then(snapshot => {
+                        const questionList = document.getElementById("questionList");
+                        questionList.innerHTML = "";
+
+                        if (snapshot.empty) {
+                            questionList.innerHTML = `<tr><td colspan="3">ไม่มีคำถาม</td></tr>`;
+                            return;
+                        }
+
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            const row = `<tr>
+                                <td>${data.question_no}</td>
+                                <td>${data.question_text}</td>
+                                <td>${data.question_show ? '✅' : '❌'}</td>
+                            </tr>`;
+                            questionList.innerHTML += row;
+                        });
+                    })
+                    .catch(error => console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error));
+            } else {
+                alert("กรุณาเข้าสู่ระบบก่อน");
+                window.location.href = "login.html";
+            }
         });
 
         function toggleCreateQuiz(){
@@ -301,6 +352,35 @@
         function toggleManage() {
           window.location.href = `manageClass.html?subjectId=${subjectId}`;
         }
+
+        
+
+        document.getElementById("btn-qr").addEventListener("click", function(){
+      // แสดง modal สำหรับ QR Code
+      document.getElementById("qr-modal").style.display = "block";
+      // ล้าง container ก่อนสร้างใหม่ (กรณีคลิกหลายครั้ง)
+      document.getElementById("qr-code").innerHTML = "";
+      // สร้าง URL สำหรับการลงทะเบียนวิชาโดยใช้ subjectId
+      const registrationUrl = `https://yourdomain.com/register?subjectId=${subjectId}`;
+      // สร้าง QR Code ด้วย registrationUrl
+      new QRCode(document.getElementById("qr-code"), {
+        text: registrationUrl,
+        width: 128,
+        height: 128,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    });
+
+    function closeQR() {
+      document.getElementById("qr-modal").style.display = "none";
+    }
+
+    function goBack(){
+      window.location.href = `index.html`;
+    }
+
     </script>
 </body>
 </html>
