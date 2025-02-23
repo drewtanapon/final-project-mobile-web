@@ -232,7 +232,7 @@
 <div class="tab">
   <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
   <a href="#" onclick="toManage()">จัดการนักเรียน</a>
-  <a href="manageClass.html?subjectId=${subjectId} class="active" onclick="toggleCheck()">เช็คชื่อ</a>
+  <a href="#" onclick="toggleCheck()">เช็คชื่อ</a>
   <a href="#" onclick="toQiuz()">คำถาม</a>
 </div>
 
@@ -371,6 +371,15 @@
       });
     });
     let unsubscribeCheckin = null;
+
+    function toggleCheck(){
+      window.location.href = `checkin.html?subjectId=${subjectId}`;
+    }
+
+    function toQiuz(){
+      window.location.href = `showQuiz.html?subjectId=${subjectId}`;
+    }
+
 
     function loadCheck() {
       console.log("Loading check-in data");  // ตรวจสอบว่าฟังก์ชันถูกเรียกกี่ครั้ง
