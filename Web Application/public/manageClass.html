@@ -26,6 +26,42 @@
       color: #000000;
       padding: 20px;
     }
+     /* ========== สไตล์แท็บ ========== */
+     .tab {
+      display: flex;
+      background-color: #ccc;
+      border-radius: 8px 8px 0 0;
+      overflow: hidden;
+    }
+    .tab a {
+      flex: 1;
+      text-align: center;
+      background-color: inherit;
+      text-decoration: none;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 16px;
+      border-right: 1px solid #bbb;
+      color: #000;
+    }
+    .tab a:last-child {
+      border-right: none;
+    }
+    .tab a:hover {
+      background-color: #ddd;
+    }
+    .tab a.active {
+      background-color: #fff;
+      font-weight: bold;
+    }
+    .tabcontent {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 0 8px 8px 8px;
+      box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
     .subject-info {
       display: flex;
       flex-direction: column;
@@ -189,16 +225,20 @@
     </div>
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
-      <button id="btn-checkin">เพิ่มการเช็คชื่อ</button>
-      <button id="btn-check-in" onclick ="toCheckin()" >Check-in</button>
-      <button id="btn-createq" onclick="toggleCreateQiuz()">สร้างคำถาม</button>
     </div>
   </div>
 
-  <!-- ส่วนแสดงรายละเอียดภายในห้องเรียน -->
-  <div class="container">
-    <!-- ตารางรายชื่อนักเรียนที่ลงทะเบียน -->
-    <h2>รายชื่อนักเรียนที่ลงทะเบียน</h2>
+  <!-- แท็บ 3 ปุ่ม -->
+  <div class="tab">
+    <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
+    <a href="manageClass.html?subjectId=${subjectId}" class="active">จัดการนักเรียน</a>
+    <a href="#" onclick="toggleCheck()">เช็คชื่อ</a>
+    <a href="#" onclick="toggleQiuz()">คำถาม</a>
+  </div>
+  
+  <!-- ส่วนเนื้อหา (tabcontent) ของหน้านี้ -->
+  <div class="tabcontent">
+    <h2>จัดการนักเรียน</h2>
     <table class="student-table">
       <thead>
         <tr>
@@ -209,25 +249,9 @@
         </tr>
       </thead>
       <tbody id="student-table-body">
-        <!-- ข้อมูลนักเรียนจะถูกเติมที่นี่ -->
-        <tr>
-          <td>1</td>
-          <td>STU001</td>
-          <td>สมชาย ใจดี</td>
-          <td><img src="" alt="student1" width="50"></td>
-          <td>Active</td>
-        </tr>
+        <tr><td colspan="4">กำลังโหลด...</td></tr>
       </tbody>
     </table>
-
-    <!-- แสดงรายการประวัติการเช็คชื่อ -->
-    <div class="history">
-      <h3>ประวัติการเช็คชื่อ</h3>
-      <ul id="checkin-history">
-        <!-- รายการประวัติจะถูกเติมที่นี่ -->
-        <li id="checkin-list"></li>
-      </ul>
-    </div>
   </div>
 
   <!-- Modal สำหรับแสดง QR Code -->
@@ -237,33 +261,6 @@
       <div id="qr-code">
         <!-- QR Code จะแสดงที่นี่ -->
       </div>
-    </div>
-  </div>
-
-  <!-- Modal สำหรับเพิ่มการเช็คชื่อ -->
-  <div id="checkin-modal">
-    <div class="modal-content">
-      <span class="close" id="close-checkin-modal">×</span>
-      <h3>สร้างการเช็คชื่อใหม่</h3>
-      <form id="checkin-form-modal">
-        <div>
-          <label>รหัสเช็คชื่อ:</label>
-          <input type="text" id="modal-checkin-code" required>
-        </div>
-        <div>
-          <label>วันเวลาเริ่มเช็คชื่อ:</label>
-          <input type="datetime-local" id="modal-start-time" required>
-        </div>
-        <div>
-          <label>วันเวลาถือว่าสาย:</label>
-          <input type="datetime-local" id="modal-late-time" required>
-        </div>
-        <div>
-          <label>วันเวลาปิดการเช็คชื่อ:</label>
-          <input type="datetime-local" id="modal-close-time" required>
-        </div>
-        <button type="submit">บันทึก</button>
-      </form>
     </div>
   </div>
 
@@ -302,7 +299,6 @@
             }
         });
         // ✅ โหลดรายการเช็คชื่อ หลังจากที่ currentUserUID ได้ค่าแล้ว
-        loadCheck();
         loadStudent();
       }else {
         console.log("ผู้ใช้ยังไม่ได้ล็อกอิน");
@@ -333,15 +329,15 @@
       document.getElementById("qr-modal").style.display = "none";
     }
 
-    function toggleCreateQiuz(){
-      window.location.href = `createQuiz.html?subjectId=${subjectId}`;
+    function toggleQiuz(){
+      window.location.href = `quiz.html?subjectId=${subjectId}`;
+    }
+
+    function toggleCheck(){
+      window.location.href = `checkin.html?subjectId=${subjectId}`;
     }
 
     // ฟังก์ชันสำหรับเพิ่มการเช็คชื่อ
-    // เมื่อคลิกปุ่มเพิ่มการเช็คชื่อ
-    document.getElementById("btn-checkin").addEventListener("click", function(){
-      document.getElementById("checkin-modal").style.display = "block";
-    });
 
     // เมื่อคลิกปุ่มปิดใน Modal การเช็คชื่อ
     document.getElementById("close-checkin-modal").addEventListener("click", function(){
@@ -387,158 +383,8 @@
       });
     });
 
-    function loadCheck() {
-      const CheckList = document.getElementById("checkin-list");
-      CheckList.innerHTML = "<li>กำลังโหลดข้อมูล...</li>";
-
-      if (!currentUserUID || !subjectId) {
-          console.error("❌ currentUserUID หรือ subjectId ไม่มีค่า");
-          return;
-      }
-
-      db.collection("users")
-          .doc(currentUserUID)
-          .collection("classroom")
-          .doc(subjectId)
-          .collection("checkin")
-          .orderBy("createdAt", "desc")
-          .onSnapshot((querySnapshot) => {
-              CheckList.innerHTML = ""; // ล้างข้อมูลเก่า
-              if (querySnapshot.empty) {
-                  CheckList.innerHTML = "<li>ไม่มีรายการเช็คชื่อ</li>";
-                  return;
-              }
-
-              const ol = document.createElement("ol");
-              querySnapshot.forEach((doc) => {
-                  const checkData = doc.data();
-                  console.log("📌 ข้อมูลเช็คชื่อที่โหลด: ", checkData);
-
-                  const li = document.createElement("li");
-                  li.textContent = `${new Date(checkData.startTime).toLocaleString()} - ${checkData.checkinCode}`;
-
-                  const detailDiv = document.createElement("div");
-                  detailDiv.style.display = "none";
-                  detailDiv.style.marginTop = "5px";
-                  detailDiv.style.paddingLeft = "20px";
-
-                  const table = document.createElement("table");
-                  table.style.width = "100%";
-                  table.style.borderCollapse = "collapse";
-                  table.innerHTML = `
-                      <thead>
-                          <tr>
-                              <th style="border: 1px solid #ddd; padding: 8px;">ลำดับ</th>
-                              <th style="border: 1px solid #ddd; padding: 8px;">เลขประจำตัว</th>
-                              <th style="border: 1px solid #ddd; padding: 8px;">ชื่อ</th>
-                              <th style="border: 1px solid #ddd; padding: 8px;">สถานะ</th>
-                              <th style="border: 1px solid #ddd; padding: 8px;">วันที่</th>
-                              <th style="border: 1px solid #ddd; padding: 8px;">เวลา</th>
-                              <th style="border: 1px solid #ddd; padding: 8px;">หมายเหตุ</th>
-                          </tr>
-                      </thead>
-                      <tbody id="studentTableBody-${checkData.checkinCode}">
-                          <tr>
-                              <td colspan="7" style="border: 1px solid #ddd; padding: 8px;">กดดูรายชื่อเพื่อโหลดข้อมูล</td>
-                          </tr>
-                      </tbody>
-                  `;
-                  detailDiv.appendChild(table);
-
-                  li.addEventListener("click", () => {
-                      if (detailDiv.style.display === "none") {
-                          detailDiv.style.display = "block";
-                          loadCheckinStudents(currentUserUID, subjectId, checkData.checkinCode);
-                      } else {
-                          detailDiv.style.display = "none";
-                      }
-                  });
-
-                  li.appendChild(detailDiv);
-                  ol.appendChild(li);
-              });
-
-              CheckList.appendChild(ol);
-          });
-    }
-
-    function loadCheckinStudents(currentUserUID, subjectId, checkinCode) {
-      if (!currentUserUID || !subjectId || !checkinCode) {
-          console.error("❌ ข้อมูลไม่ครบ: currentUserUID, subjectId หรือ checkinCode ไม่มีค่า");
-          return;
-      }
-
-      const tbody = document.getElementById(`studentTableBody-${checkinCode}`);
-      tbody.innerHTML = "<tr><td colspan='7'>กำลังโหลดข้อมูล...</td></tr>";
-
-      // 1️⃣ โหลดนักเรียนทั้งหมดของวิชา
-      db.collection("users")
-        .doc(currentUserUID)
-        .collection("classroom")
-        .doc(subjectId)
-        .collection("Student")
-        .get()
-        .then((studentQuery) => {
-            const students = {};
-            studentQuery.forEach((doc) => {
-                students[doc.id] = {
-                    sid: doc.data().sid || "-",
-                    name: doc.data().name || "-",
-                    status: "-",
-                    date: "-",
-                    time: "-",
-                    remake: "-"
-                };
-            });
-
-            // 2️⃣ โหลดสถานะจาก Check-in และอัปเดตข้อมูลนักเรียน
-            db.collection("users")
-              .doc(currentUserUID)
-              .collection("classroom")
-              .doc(subjectId)
-              .collection("checkin")
-              .doc(checkinCode)
-              .collection("Student")
-              .get()
-              .then((checkinQuery) => {
-                  checkinQuery.forEach((doc) => {
-                      if (students[doc.id]) {
-                          students[doc.id].status = doc.data().status || "-";
-                          students[doc.id].date = doc.data().date || "-";
-                          students[doc.id].time = doc.data().time || "-";
-                          students[doc.id].remake = doc.data().remake || "-";
-                      }
-                  });
-
-                  // 3️⃣ แสดงข้อมูลนักเรียนทั้งหมด พร้อมสถานะของ Check-in นั้น
-                  tbody.innerHTML = ""; // ล้างข้อมูลเก่า
-                  let index = 1;
-                  for (const studentId in students) {
-                      const student = students[studentId];
-                      const tr = document.createElement("tr");
-                      tr.innerHTML = `
-                          <td style="border: 1px solid #ddd; padding: 8px;">${index++}</td>
-                          <td style="border: 1px solid #ddd; padding: 8px;">${student.sid}</td>
-                          <td style="border: 1px solid #ddd; padding: 8px;">${student.name}</td>
-                          <td style="border: 1px solid #ddd; padding: 8px;">${student.status}</td>
-                          <td style="border: 1px solid #ddd; padding: 8px;">${student.date}</td>
-                          <td style="border: 1px solid #ddd; padding: 8px;">${student.time}</td>
-                          <td style="border: 1px solid #ddd; padding: 8px;">${student.remake}</td>
-                      `;
-                      tbody.appendChild(tr);
-                  }
-              })
-              .catch((error) => {
-                  console.error("❌ เกิดข้อผิดพลาดในการโหลดสถานะเช็คชื่อ: ", error);
-              });
-        })
-        .catch((error) => {
-            console.error("❌ เกิดข้อผิดพลาดในการโหลดรายชื่อนักเรียน: ", error);
-        });
-    }
-
     // ✅ โหลดรายชื่อนักเรียน
-    function loadStudent() {
+    function loadStudent(userId) {
         const studentTableBody = document.getElementById("student-table-body");
         studentTableBody.innerHTML = "<tr><td colspan='5'>กำลังโหลดข้อมูล...</td></tr>";
 

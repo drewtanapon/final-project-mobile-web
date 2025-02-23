@@ -202,6 +202,8 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        
+
         // ตรวจสอบสถานะผู้ใช้
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
