@@ -261,7 +261,6 @@
           <th>ลำดับ</th>
           <th>รหัส</th>
           <th>ชื่อ</th>
-          <th>รูปภาพ</th>
         </tr>
       </thead>
       <tbody id="student-table-body">
@@ -372,45 +371,68 @@
     }
 
     // ✅ โหลดรายชื่อนักเรียน
-    function loadStudent(userId) {
-        const studentTableBody = document.getElementById("student-table-body");
-        studentTableBody.innerHTML = "<tr><td colspan='5'>กำลังโหลดข้อมูล...</td></tr>";
+    function loadStudent() {
+      const studentTableBody = document.getElementById("student-table-body");
+      studentTableBody.innerHTML = "<tr><td colspan='4'>กำลังโหลดข้อมูล...</td></tr>";
 
-        if (!currentUserUID || !subjectId) {
-            console.error("currentUserUID หรือ subjectId ไม่มีค่า");
-            return;
-        }
+      if (!subjectId) {
+          console.error("❌ ไม่พบ subjectId");
+          return;
+      }
 
-        db.collection("users")
-          .doc(currentUserUID)
-          .collection("classroom")
-          .doc(subjectId).collection("Student")
+      // 📌 ดึงนักเรียนที่มี subjectId นี้ใน subcollection subjectList
+      db.collection("Student")
           .get()
           .then((querySnapshot) => {
               studentTableBody.innerHTML = ""; // ล้างข้อมูลเก่า
- 
-              if (querySnapshot.empty) {
-                  studentTableBody.innerHTML = "<tr><td colspan='5'>ไม่มีนักเรียนลงทะเบียน</td></tr>";
-                  return;
-              }
-
               let index = 1;
-              querySnapshot.forEach((doc) => {
-                  const studentData = doc.data();
-                  console.log("ข้อมูลนักเรียนที่โหลด: ", studentData);
+              let hasStudent = false;
+              let studentPromises = [];
 
-                  // สร้างแถวของนักเรียน
-                  const tr = document.createElement("tr");
-                  tr.innerHTML = `
-                      <td>${index++}</td>
-                      <td>${studentData.sid || "ไม่มีชื่อ"}</td>
-                      <td>${studentData.name || "ไม่มีชื่อ"}</td>
-                      <td>${studentData.img || "ไม่มีชื่อ"}</td>
-                  `;
-                  studentTableBody.appendChild(tr);
+              querySnapshot.forEach((doc) => {
+                  let studentId = doc.id; // ID ของนักเรียน
+                  let studentRef = db.collection("Student").doc(studentId).collection("subjectList").doc(subjectId);
+
+                  // ตรวจสอบว่านักเรียนมี subjectId นี้หรือไม่
+                  studentPromises.push(
+                      studentRef.get().then((subjectDoc) => {
+                          if (subjectDoc.exists) {
+                              return db.collection("Student").doc(studentId).get();
+                          }
+                          return null;
+                      })
+                  );
               });
+
+              // 📌 รอให้ Promise ทั้งหมดทำงานเสร็จ
+              Promise.all(studentPromises).then((students) => {
+                  students.forEach((studentDoc) => {
+                      if (studentDoc && studentDoc.exists) {
+                          let studentData = studentDoc.data();
+                          hasStudent = true;
+
+                          console.log("📌 นักเรียนที่พบ:", studentData);
+
+                          const tr = document.createElement("tr");
+                          tr.innerHTML = `
+                              <td>${index++}</td>
+                              <td>${studentData.sid || "ไม่มีรหัส"}</td>
+                              <td>${studentData.name || "ไม่มีชื่อ"}</td>
+                          `;
+                          studentTableBody.appendChild(tr);
+                      }
+                  });
+
+                  if (!hasStudent) {
+                      studentTableBody.innerHTML = "<tr><td colspan='4'>ไม่มีนักเรียนลงทะเบียน</td></tr>";
+                  }
+              });
+          })
+          .catch((error) => {
+              console.error("❌ เกิดข้อผิดพลาดในการโหลดนักเรียน:", error);
           });
     }
+
     
 
     function goBack(){
