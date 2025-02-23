@@ -335,59 +335,13 @@
     function closeQR() {
       document.getElementById("qr-modal").style.display = "none";
     }
-    function toggleQiuz(){
+    function toggleQuiz(){
       window.location.href = `quiz.html?subjectId=${subjectId}`;
     }
 
     function toggleCheck(){
       window.location.href = `checkin.html?subjectId=${subjectId}`;
     }
-
-    // ฟังก์ชันสำหรับเพิ่มการเช็คชื่อ
-
-    // เมื่อคลิกปุ่มปิดใน Modal การเช็คชื่อ
-    document.getElementById("close-checkin-modal").addEventListener("click", function(){
-      document.getElementById("checkin-modal").style.display = "none";
-    });
-
-    // จัดการการส่งฟอร์มใน Modal สำหรับสร้างเช็คชื่อใหม่
-    document.getElementById("checkin-form-modal").addEventListener("submit", function(event) {
-      event.preventDefault();
-
-      const checkinCode = document.getElementById("modal-checkin-code").value;
-      const startTime = new Date(document.getElementById("modal-start-time").value).getTime();
-      const lateTime = new Date(document.getElementById("modal-late-time").value).getTime();
-      const closeTime = new Date(document.getElementById("modal-close-time").value).getTime();
-
-      // สร้างเอกสารใหม่ที่ path: /classroom/{cid}/checkin/{checkinCode}
-      db.collection("users").doc(currentUserUID).collection("classroom").doc(subjectId).collection("checkin").doc(checkinCode).set({
-        checkinCode: checkinCode,
-        startTime: startTime,
-        lateTime: lateTime,
-        closeTime: closeTime,
-        createdAt: Date.now()
-      }).then(() => {
-        alert("สร้างการเช็คชื่อสำเร็จ!");
-        document.getElementById("checkin-modal").style.display = "none";
-
-        // ขั้นตอนคัดลอกรายชื่อนักเรียนจาก /classroom/{cid}/students
-        // ไปยัง /classroom/{cid}/checkin/{checkinCode}/scores โดยกำหนด status = 0
-        db.collection("classroom").doc(cid).collection("students").get().then((querySnapshot) => {
-          querySnapshot.forEach((doc) => {
-            const studentData = doc.data();
-            db.collection("classroom").doc(cid).collection("checkin").doc(checkinCode)
-              .collection("scores").doc(doc.id).set({
-                status: 0,
-                studentName: studentData.name || ""
-              });
-          });
-        }).catch((error) => {
-          console.error("เกิดข้อผิดพลาดในการคัดลอกรายชื่อนักเรียน: ", error);
-        });
-      }).catch((error) => {
-        console.error("เกิดข้อผิดพลาดในการสร้างเช็คชื่อ: ", error);
-      });
-    });
 
     // ✅ โหลดรายชื่อนักเรียน
     function loadStudent(userId) {
@@ -429,10 +383,6 @@
               });
           });
     }
-    function toCheckin(subjectId) {
-        window.location.href = `check-in.html?subjectId=${subjectId}`;
-    }
-
     function toggleForback(){
       window.location.href = "index.html";
     }
