@@ -249,7 +249,7 @@
     <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
     <a href="#" class="active">จัดการนักเรียน</a>
     <a href="#" onclick="toggleCheck()">เช็คชื่อ</a>
-    <a href="#" onclick="toggleQuiz()">คำถาม</a>
+    <a href="#" onclick="toQiuz()">คำถาม</a>
   </div>
   
   <!-- ส่วนเนื้อหา (tabcontent) ของหน้านี้ -->
@@ -312,6 +312,7 @@
               const data = doc.data();
               document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
               document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
+              
               // ✅ อัปเดต background-image ของ header
               if (data.photo) {
                 document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
@@ -396,9 +397,7 @@
               });
           });
     }
-    function toggleForback(){
-      window.location.href = "index.html";
-    }
+    
 
     function goBack(){
       window.location.href = `index.html`;
