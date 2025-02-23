@@ -23,7 +23,7 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0px 0px 10px #888888;
-            width: 300px;
+            width: 350px;
             text-align: center;
         }
         input {
@@ -47,6 +47,23 @@
         button:hover {
             background-color: #000099;
         }
+        /* สไตล์สำหรับรูป Classroom Avatar */
+        #classroom-options {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .classroom-option {
+            width: 80px;
+            height: 80px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 10px;
+        }
+        .classroom-option.selected {
+            border-color: blue;
+        }
     </style>
 </head>
 <body>
@@ -54,13 +71,18 @@
         <h2>Classroom Form</h2>
         <input type="text" id="code" placeholder="รหัสวิชา">
         <input type="text" id="name" placeholder="ชื่อวิชา">
-        <input type="text" id="photo" placeholder="ลิงก์รูปภาพ">
+        <div id="classroom-options">
+            <!-- แก้ไข path ให้ถูกต้องโดยใช้ forward slashes -->
+            <img src="asset/classroom1.webp" class="classroom-option" data-url="asset/classroom1.webp" alt="Avatar 1">
+            <img src="asset/classroom2.webp" class="classroom-option" data-url="asset/classroom2.webp" alt="Avatar 2">
+            <img src="asset/classroom3.webp" class="classroom-option" data-url="asset/classroom3.webp" alt="Avatar 3">
+        </div>
         <input type="text" id="room" placeholder="ห้องเรียน">
         <button onclick="saveSubject()">บันทึก</button>
     </div>
 
     <script>
-        // 🔥 ตั้งค่า Firebase
+        //ตั้งค่า Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
             authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
@@ -69,13 +91,26 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        let selectedAvatarUrl = ""; // เก็บ URL ของ Avatar ที่เลือก
+
+        // จับ event สำหรับ Avatar Options
+        const classroomOptions = document.querySelectorAll(".classroom-option");
+        classroomOptions.forEach(option => {
+            option.addEventListener("click", function() {
+                // เก็บ URL ของ Avatar ที่เลือก
+                selectedAvatarUrl = this.getAttribute("data-url");
+                // highlight รูปที่เลือกด้วยการเพิ่ม class "selected"
+                classroomOptions.forEach(o => o.classList.remove("selected"));
+                this.classList.add("selected");
+            });
+        });
+
         function saveSubject() {
             const code = document.getElementById("code").value.trim();
             const name = document.getElementById("name").value.trim();
-            const photo = document.getElementById("photo").value.trim();
             const room = document.getElementById("room").value.trim();
 
-            // ✅ ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
+            // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
             firebase.auth().onAuthStateChanged(user => {
                 if (!user) {
                     alert("กรุณาเข้าสู่ระบบก่อน");
@@ -89,21 +124,26 @@
                     return;
                 }
 
-                // ✅ บันทึกข้อมูลแยกตาม `userId`
+                if (!selectedAvatarUrl) {
+                    alert("กรุณาเลือก Avatar สำหรับห้องเรียน");
+                    return;
+                }
+
+                //บันทึกข้อมูลแยกตาม `userId`
                 db.collection("users").doc(userId).collection("classroom").add({
                     code: code,
                     name: name,
-                    photo: photo,
+                    photo: selectedAvatarUrl, // ใช้ Avatar ที่เลือก
                     room: room,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 }).then(() => {
-                    alert("✅ บันทึกข้อมูลสำเร็จ!");
+                    alert("บันทึกข้อมูลสำเร็จ!");
                     document.querySelectorAll("input").forEach(input => input.value = ""); // เคลียร์ค่า input
                     
                     // 🔹 หลังจากบันทึกเสร็จให้เปลี่ยนหน้าไปที่ index.html
                     window.location.href = "index.html";
                 }).catch(error => {
-                    console.error("❌ เกิดข้อผิดพลาด: ", error);
+                    console.error("เกิดข้อผิดพลาด: ", error);
                 });
             });
         }
