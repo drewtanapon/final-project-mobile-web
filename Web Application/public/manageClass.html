@@ -249,7 +249,7 @@
     <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
     <a href="#" class="active">จัดการนักเรียน</a>
     <a href="#" onclick="toggleCheck()">เช็คชื่อ</a>
-    <a href="#" onclick="toQiuz()">คำถาม</a>
+    <a href="#" onclick="toggleQiuz()">คำถาม</a>
   </div>
   
   <!-- ส่วนเนื้อหา (tabcontent) ของหน้านี้ -->
@@ -358,7 +358,7 @@
     function closeQR() {
       document.getElementById("qr-modal").style.display = "none";
     }
-    function toggleQuiz(){
+    function toggleQiuz(){
       window.location.href = `showQuiz.html?subjectId=${subjectId}`;
     }
 

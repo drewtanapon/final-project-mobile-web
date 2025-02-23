@@ -289,7 +289,7 @@
   <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
   <a href="#" onclick="toggleManage()">จัดการนักเรียน</a>
   <a href="#" class="active">เช็คชื่อ</a>
-  <a href="#" onclick="toQuiz()">คำถาม</a>
+  <a href="#" onclick="toggleQiuz()">คำถาม</a>
 </div>
 
 
@@ -385,7 +385,7 @@
     function toggleManage() {
         window.location.href = `manageClass.html?subjectId=${subjectId}`;
     }
-    function toQuiz() {
+    function toggleQiuz() {
         window.location.href = `showQuiz.html?subjectId=${subjectId}`;
     }
 
