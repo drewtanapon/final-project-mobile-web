@@ -207,7 +207,6 @@
         // ตรวจสอบสถานะผู้ใช้
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
-                console.log("User logged in: ", user);
                 const uid = user.uid; // UID ของผู้ใช้
                 const userDocRef = db.collection("users").doc(uid);
 
