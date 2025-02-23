@@ -191,7 +191,9 @@
       <button id="btn-qr">แสดง QR Code</button>
       <button id="btn-checkin">เพิ่มการเช็คชื่อ</button>
       <button id="btn-check-in" onclick ="toCheckin()" >Check-in</button>
-      <button id="btn-createq" onclick="toggleCreateQiuz()">สร้างคำถาม</button>
+      <button id="btn-show-quiz" onclick="toggleShowQuiz()">แสดงคำถาม</button>
+      <button onclick="toggleForback()">กลับหน้าหลัก</button>
+      
     </div>
   </div>
 
@@ -333,8 +335,13 @@
       document.getElementById("qr-modal").style.display = "none";
     }
 
-    function toggleCreateQiuz(){
-      window.location.href = `createQuiz.html?subjectId=${subjectId}`;
+    function toggleForback(){
+      
+    }
+    
+
+    function toggleShowQuiz(){
+      window.location.href = `showQuiz.html?subjectId=${subjectId}`
     }
 
     // ฟังก์ชันสำหรับเพิ่มการเช็คชื่อ
@@ -579,6 +586,10 @@
     }
     function toCheckin(subjectId) {
         window.location.href = `check-in.html?subjectId=${subjectId}`;
+    }
+
+    function toggleForback(){
+      window.location.href = "index.html";
     }
 
   </script>

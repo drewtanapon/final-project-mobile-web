@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     
-    
     <style>
         body {
             display: flex;
@@ -32,7 +31,7 @@
         h2 {
             margin-bottom: 20px;
         }
-        input, textarea {
+        textarea {
             width: 100%;
             padding: 10px;
             margin-top: 10px;
@@ -55,24 +54,35 @@
         button:hover {
             background-color: #45a049;
         }
+        #btn-cancle{
+            background-color: #cd5141;
+            color: white;
+            border: none;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+            margin-top: 10px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>สร้างคำถามในห้องเรียน</h2>
-        <input type="number" id="questionNo" placeholder="หมายเลขคำถาม">
         <textarea id="questionText" placeholder="ข้อความคำถาม"></textarea>
         <label>
             <input type="checkbox" id="questionShow"> แสดงคำถาม
         </label>
-        <button onclick="submitQuestion()">บันทึกคำถาม</button>
+        
+        <button  onclick="submitQuestion()">บันทึกคำถาม</button>
+        <button onclick="toggleCancle()" id="btn-cancle">ยกเลิก</button>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const subjectId = urlParams.get('subjectId');
-
-        console.log(subjectId)
 
         const firebaseConfig = {
             apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
@@ -82,88 +92,71 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // ดึงข้อมูลรายวิชาจาก Firestore ด้วย subjectId
-        firebase.auth().onAuthStateChanged((user) => {
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const subjectId = urlParams.get('subjectId');
-
-            if (user) {
-                currentUserUID = user.uid;
-                db.collection("users")
-                .doc(currentUserUID)
-                .collection("classroom")
-                .doc(subjectId)
-                .get()
-                .then((doc) => {
-                    if (doc.exists) {
-                    const data = doc.data();
-                    document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
-                    document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
-                    }
-                });
+        async function getMaxQuestionNo(userId, subjectId) {
+            try {
+                const querySnapshot = await db.collection("users")
+                    .doc(userId)
+                    .collection("classroom")
+                    .doc(subjectId)
+                    .collection("question")
+                    .orderBy("question_no", "desc")
+                    .limit(1)
+                    .get();
+                
+                if (!querySnapshot.empty) {
+                    return querySnapshot.docs[0].data().question_no + 1;
+                } else {
+                    return 1;
+                }
+            } catch (error) {
+                console.error("❌ เกิดข้อผิดพลาดในการดึง question_no:", error);
+                return 1;
             }
-        });
-
-        async function submitQuestion() {
-    const questionNo = document.getElementById("questionNo").value.trim();
-    const questionText = document.getElementById("questionText").value.trim();
-    const questionShow = document.getElementById("questionShow").checked;
-    
-    // 🔹 ดึง subjectId จาก URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const subjectId = urlParams.get('subjectId');
-
-    if (!subjectId) {
-        alert("❌ ไม่พบรหัสวิชา!");
-        return;
-    }
-
-    if (questionNo === "" || questionText === "") {
-        alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
-        return;
-    }
-
-    firebase.auth().onAuthStateChanged(user => {
-        if (!user) {
-            alert("❌ กรุณาเข้าสู่ระบบก่อน");
-            return;
+        }
+        function toggleCancle(){
+            window.location.href = `showQuiz.html?subjectId=${subjectId}`;
         }
 
-        const userId = user.uid;
+        async function submitQuestion() {
+            const questionText = document.getElementById("questionText").value.trim();
+            const questionShow = document.getElementById("questionShow").checked;
 
-        // ✅ เพิ่มรหัสวิชาไปยัง document ของห้องเรียน
-        db.collection("users")
-          .doc(userId)
-          .collection("classroom")
-          .doc(subjectId)
-          .set({ subjectId: subjectId }, { merge: true })  // 🔹 เพิ่ม subjectId ไปในห้องเรียน
+            if (!subjectId) {
+                alert("❌ ไม่พบรหัสวิชา!");
+                return;
+            }
 
-          .then(() => {
-            // ✅ บันทึกคำถามลงใน collection question
-            return db.collection("users")
-                     .doc(userId)
-                     .collection("classroom")
-                     .doc(subjectId)
-                     .collection("question")
-                     .add({
-                        question_no: questionNo,
-                        question_text: questionText,
-                        question_show: questionShow
-                     });
-          })
-          .then(() => {
-              alert("✅ บันทึกคำถามสำเร็จ!");
-              document.querySelectorAll("input").forEach(input => input.value = ""); 
-              window.location.href = "manageClass.html";
-          })
-          .catch(error => {
-              console.error("❌ เกิดข้อผิดพลาด: ", error);
-          });
-    });
-}
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (!user) {
+                    alert("❌ กรุณาเข้าสู่ระบบก่อน");
+                    return;
+                }
 
-        
+                const userId = user.uid;
+
+                try {
+                    const nextQuestionNo = await getMaxQuestionNo(userId, subjectId);
+
+                    await db.collection("users")
+                        .doc(userId)
+                        .collection("classroom")
+                        .doc(subjectId)
+                        .collection("question")
+                        .add({
+                            question_no: nextQuestionNo,
+                            question_text: questionText,
+                            question_show: questionShow
+                        });
+
+                    alert("✅ บันทึกคำถามสำเร็จ!");
+                    document.getElementById("questionText").value = ""; 
+                    document.getElementById("questionShow").checked = false;
+                    window.location.href = `showQuiz.html?subjectId=${subjectId}`
+                } catch (error) {
+                    console.error("❌ เกิดข้อผิดพลาดในการบันทึกคำถาม:", error);
+                }
+            });
+        }
     </script>
 </body>
 </html>
