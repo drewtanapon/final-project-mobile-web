@@ -231,8 +231,8 @@
   <!-- แถบแท็บ 3 ปุ่ม -->
 <div class="tab">
   <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
-  <a href="#" onclick="toManage()">จัดการนักเรียน</a>
-  <a href="manageClass.html?subjectId=${subjectId} class="active" onclick="toggleCheck()">เช็คชื่อ</a>
+  <a href="#" onclick="goBackToManageClass()">จัดการนักเรียน</a>
+  <a href="manageClass.html?subjectId=${subjectId}" class="active">เช็คชื่อ</a>
   <a href="#" onclick="toQiuz()">คำถาม</a>
 </div>
 
@@ -277,10 +277,17 @@
 
   <script>
     // ดึง subjectId จาก query string
-    const urlParams = new URLSearchParams(window.location.search);
-    const subjectId = urlParams.get('subjectId');
+    let urlParams = new URLSearchParams(window.location.search);
+    let subjectId = urlParams.get('subjectId') || sessionStorage.getItem('subjectId');
 
     console.log(subjectId);
+    // ถ้า subjectId ไม่มีค่า ให้ดึงจาก sessionStorage
+    if (!subjectId) {
+        console.error("❌ ไม่พบ subjectId");
+    } else {
+        console.log("✅ subjectId:", subjectId);
+        sessionStorage.setItem('subjectId', subjectId); // เก็บค่าไว้ใช้ในหน้าอื่น
+    }
 
     let currentUserUID = "";
     const firebaseConfig = {
@@ -315,9 +322,19 @@
       }
     });
 
-    function toManage(subjectId) {
-        window.location.href = `manageClass.html?subjectId=${subjectId}`;
+    function goBackToManageClass() {
+        let subjectId = sessionStorage.getItem('subjectId'); // ดึง subjectId กลับมา
+        console.log("🔄 กำลังกลับไปที่ manageClass.html");
+        console.log("✅ subjectId:", subjectId);
+
+        if (subjectId) {
+            window.location.href = `manageClass.html?subjectId=${subjectId}`;
+        } else {
+            console.error("❌ subjectId หาย กำลังเปลี่ยนหน้าไป manageClass.html");
+            window.location.href = "manageClass.html"; // ถ้า subjectId หายให้ไปหน้า default
+        }
     }
+
     function toQuiz(subjectId) {
         window.location.href = `quiz.html?subjectId=${subjectId}`;
     }

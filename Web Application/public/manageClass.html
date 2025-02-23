@@ -269,8 +269,16 @@
 
   <script>
     // ดึง subjectId จาก query string
-    const urlParams = new URLSearchParams(window.location.search);
-    const subjectId = urlParams.get('subjectId');
+    let urlParams = new URLSearchParams(window.location.search);
+    let subjectId = urlParams.get('subjectId') || sessionStorage.getItem('subjectId');
+
+
+    if (!subjectId) {
+    console.error("❌ ไม่พบ subjectId");
+    } else {
+        console.log("✅ subjectId:", subjectId);
+        sessionStorage.setItem('subjectId', subjectId); // เก็บค่าไว้ใช้ในหน้าอื่น
+    }
 
     console.log(subjectId);
 
@@ -335,12 +343,21 @@
     function closeQR() {
       document.getElementById("qr-modal").style.display = "none";
     }
-    function toggleQiuz(){
-      window.location.href = `quiz.html?subjectId=${subjectId}`;
+    function toggleQuiz() {
+        if (subjectId) {
+            window.location.href = `quiz.html?subjectId=${subjectId}`;
+        } else {
+            console.error("❌ ไม่พบ subjectId ใน URL");
+        }
     }
 
-    function toggleCheck(){
-      window.location.href = `checkin.html?subjectId=${subjectId}`;
+    function toggleCheck() {
+        if (subjectId) {
+            sessionStorage.setItem('subjectId', subjectId);
+            window.location.href = `checkin.html?subjectId=${subjectId}`;
+        } else {
+            console.error("❌ ไม่พบ subjectId");
+        }
     }
 
     // ฟังก์ชันสำหรับเพิ่มการเช็คชื่อ
@@ -429,12 +446,13 @@
               });
           });
     }
-    function toCheckin(subjectId) {
-        window.location.href = `check-in.html?subjectId=${subjectId}`;
-    }
 
-    function toggleForback(){
-      window.location.href = "index.html";
+    function toggleForback() {
+        if (subjectId) {
+            window.location.href = `index.html?subjectId=${subjectId}`;
+        } else {
+            console.error("❌ ไม่พบ subjectId ใน URL");
+        }
     }
 
   </script>
