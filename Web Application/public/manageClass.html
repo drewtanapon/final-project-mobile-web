@@ -92,6 +92,8 @@
       color: #fff;
       border-radius: 4px;
       cursor: pointer;
+      display: flex;
+      justify-content: flex-start;
     }
     .header .buttons button:hover {
       background-color: #0056b3;
@@ -213,6 +215,16 @@
     #checkin-form-modal button:hover {
       background-color: #218838;
     }
+    #btn-back{
+      margin-right: 10px;
+      padding: 8px 12px;
+      background-color: #007bff;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: auto;;
+    }
   </style>
 </head>
 <body>
@@ -228,15 +240,16 @@
     </div>
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
+      <button id="btn-back" onclick="goBack()">กลับไปหน้าหลัก</button>
     </div>
   </div>
 
   <!-- แท็บ 3 ปุ่ม -->
   <div class="tab">
     <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
-    <a href="manageClass.html?subjectId=${subjectId}" class="active">จัดการนักเรียน</a>
+    <a href="#" class="active">จัดการนักเรียน</a>
     <a href="#" onclick="toggleCheck()">เช็คชื่อ</a>
-    <a href="#" onclick="toggleQiuz()">คำถาม</a>
+    <a href="#" onclick="toQiuz()">คำถาม</a>
   </div>
   
   <!-- ส่วนเนื้อหา (tabcontent) ของหน้านี้ -->
@@ -307,6 +320,7 @@
               const data = doc.data();
               document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
               document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
+              
               // ✅ อัปเดต background-image ของ header
               if (data.photo) {
                 document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
@@ -343,12 +357,8 @@
     function closeQR() {
       document.getElementById("qr-modal").style.display = "none";
     }
-    function toggleQuiz() {
-        if (subjectId) {
-            window.location.href = `quiz.html?subjectId=${subjectId}`;
-        } else {
-            console.error("❌ ไม่พบ subjectId ใน URL");
-        }
+    function toQiuz(){
+      window.location.href = `showQuiz.html?subjectId=${subjectId}`;
     }
 
     function toggleCheck() {
@@ -359,52 +369,6 @@
             console.error("❌ ไม่พบ subjectId");
         }
     }
-
-    // ฟังก์ชันสำหรับเพิ่มการเช็คชื่อ
-
-    // เมื่อคลิกปุ่มปิดใน Modal การเช็คชื่อ
-    document.getElementById("close-checkin-modal").addEventListener("click", function(){
-      document.getElementById("checkin-modal").style.display = "none";
-    });
-
-    // จัดการการส่งฟอร์มใน Modal สำหรับสร้างเช็คชื่อใหม่
-    document.getElementById("checkin-form-modal").addEventListener("submit", function(event) {
-      event.preventDefault();
-
-      const checkinCode = document.getElementById("modal-checkin-code").value;
-      const startTime = new Date(document.getElementById("modal-start-time").value).getTime();
-      const lateTime = new Date(document.getElementById("modal-late-time").value).getTime();
-      const closeTime = new Date(document.getElementById("modal-close-time").value).getTime();
-
-      // สร้างเอกสารใหม่ที่ path: /classroom/{cid}/checkin/{checkinCode}
-      db.collection("users").doc(currentUserUID).collection("classroom").doc(subjectId).collection("checkin").doc(checkinCode).set({
-        checkinCode: checkinCode,
-        startTime: startTime,
-        lateTime: lateTime,
-        closeTime: closeTime,
-        createdAt: Date.now()
-      }).then(() => {
-        alert("สร้างการเช็คชื่อสำเร็จ!");
-        document.getElementById("checkin-modal").style.display = "none";
-
-        // ขั้นตอนคัดลอกรายชื่อนักเรียนจาก /classroom/{cid}/students
-        // ไปยัง /classroom/{cid}/checkin/{checkinCode}/scores โดยกำหนด status = 0
-        db.collection("classroom").doc(cid).collection("students").get().then((querySnapshot) => {
-          querySnapshot.forEach((doc) => {
-            const studentData = doc.data();
-            db.collection("classroom").doc(cid).collection("checkin").doc(checkinCode)
-              .collection("scores").doc(doc.id).set({
-                status: 0,
-                studentName: studentData.name || ""
-              });
-          });
-        }).catch((error) => {
-          console.error("เกิดข้อผิดพลาดในการคัดลอกรายชื่อนักเรียน: ", error);
-        });
-      }).catch((error) => {
-        console.error("เกิดข้อผิดพลาดในการสร้างเช็คชื่อ: ", error);
-      });
-    });
 
     // ✅ โหลดรายชื่อนักเรียน
     function loadStudent(userId) {
@@ -446,13 +410,10 @@
               });
           });
     }
+    
 
-    function toggleForback() {
-        if (subjectId) {
-            window.location.href = `index.html?subjectId=${subjectId}`;
-        } else {
-            console.error("❌ ไม่พบ subjectId ใน URL");
-        }
+    function goBack(){
+      window.location.href = `index.html`;
     }
 
   </script>

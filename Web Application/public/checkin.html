@@ -10,6 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
     <!-- QRCode.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
   <style>
     /* กำหนดสไตล์พื้นฐาน */
     body {
@@ -23,8 +24,12 @@
       background-image: url('subject-bg.jpg'); /* รูปพื้นหลังของวิชา ควรเปลี่ยนเป็น dynamic */
       background-size: cover;
       background-position: center;
-      color: #000000;
       padding: 20px;
+      min-height: 250px;
+      background-repeat: no-repeat;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      transition: background-image 0.5s ease-in-out;
     }
      /* ========== สไตล์แท็บ ========== */
      .tab {
@@ -68,12 +73,12 @@
       align-items: flex-start;
     }
     .subject-code {
-      color: #000000;
+      color: #fffefe;
       font-size: 24px;
       font-weight: bold;
     }
     .subject-name {
-      color: #000000;
+      color: #ffffff;
       font-size: 20px;
       margin-top: 5px;
     }
@@ -89,18 +94,48 @@
       color: #fff;
       border-radius: 4px;
       cursor: pointer;
+      display: flex;
+      justify-content: flex-start;
     }
     .header .buttons button:hover {
       background-color: #0056b3;
     }
+    /* ========== สไตล์แท็บ ========== */
+    .tab {
+      display: flex;
+      background-color: #ccc;
+      border-radius: 8px 8px 0 0;
+      overflow: hidden;
+    }
+    .tab a {
+      flex: 1;
+      text-align: center;
+      background-color: inherit;
+      text-decoration: none;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 16px;
+      border-right: 1px solid #bbb;
+      color: #000;
+    }
+    .tab a:last-child {
+      border-right: none;
+    }
+    .tab a:hover {
+      background-color: #ddd;
+    }
+    .tab a.active {
+      background-color: #fff;
+      font-weight: bold;
+    }
     /* ส่วนคอนเทนต์หลัก */
     .container {
-      max-width: 1200px;
-      margin: 20px auto;
       background-color: #fff;
       padding: 20px;
-      border-radius: 8px;
+      border-radius: 0 8px 8px 8px;
       box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
     }
     /* ตารางแสดงนักเรียนที่ลงทะเบียน */
     .student-table {
@@ -210,11 +245,22 @@
     #checkin-form-modal button:hover {
       background-color: #218838;
     }
+    #btn-back{
+      margin-right: 10px;
+      padding: 8px 12px;
+      background-color: #007bff;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: auto;;
+
+    }
   </style>
 </head>
 <body>
   <!-- ส่วนหัวแสดงข้อมูลวิชา -->
-  <div class="header">
+  <div class="header" id="header">
     <div class="subject-info">
       <div class="subject-code">
         <p><strong>รหัสวิชา: </strong><span id="display-subjectCode"></span></p>
@@ -225,16 +271,27 @@
     </div>
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
+      <button id="btn-back" onclick="goBack()">กลับไปหน้าหลัก</button>
+    </div>
+  </div>
+  <!-- Modal สำหรับแสดง QR Code -->
+  <div id="qr-modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeQR()">×</span>
+      <div id="qr-code">
+        <!-- QR Code จะแสดงที่นี่ -->
+      </div>
     </div>
   </div>
 
   <!-- แถบแท็บ 3 ปุ่ม -->
 <div class="tab">
   <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
-  <a href="#" onclick="goBackToManageClass()">จัดการนักเรียน</a>
-  <a href="manageClass.html?subjectId=${subjectId}" class="active">เช็คชื่อ</a>
-  <a href="#" onclick="toQiuz()">คำถาม</a>
+  <a href="#" onclick="toggleManage()">จัดการนักเรียน</a>
+  <a href="#" class="active">เช็คชื่อ</a>
+  <a href="#" onclick="toQuiz()">คำถาม</a>
 </div>
+
 
   <!-- เนื้อหาแท็บนี้ -->
   <div class="container">
@@ -313,30 +370,23 @@
               const data = doc.data();
               document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
               document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
+              // ✅ อัปเดต background-image ของ header
+              if (data.photo) {
+                document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
+              }
             }
         });
-        // โหลดข้อมูลหลังจากได้รับค่า currentUserUID แล้ว
         loadCheck();
       }else {
         console.log("ผู้ใช้ยังไม่ได้ล็อกอิน");
       }
     });
 
-    function goBackToManageClass() {
-        let subjectId = sessionStorage.getItem('subjectId'); // ดึง subjectId กลับมา
-        console.log("🔄 กำลังกลับไปที่ manageClass.html");
-        console.log("✅ subjectId:", subjectId);
-
-        if (subjectId) {
-            window.location.href = `manageClass.html?subjectId=${subjectId}`;
-        } else {
-            console.error("❌ subjectId หาย กำลังเปลี่ยนหน้าไป manageClass.html");
-            window.location.href = "manageClass.html"; // ถ้า subjectId หายให้ไปหน้า default
-        }
+    function toggleManage() {
+        window.location.href = `manageClass.html?subjectId=${subjectId}`;
     }
-
-    function toQuiz(subjectId) {
-        window.location.href = `quiz.html?subjectId=${subjectId}`;
+    function toQuiz() {
+        window.location.href = `showQuiz.html?subjectId=${subjectId}`;
     }
 
     // เมื่อคลิกปุ่มเพิ่มการเช็คชื่อ
@@ -388,6 +438,15 @@
       });
     });
     let unsubscribeCheckin = null;
+
+    function toggleCheck(){
+      window.location.href = `checkin.html?subjectId=${subjectId}`;
+    }
+
+    function toggleQiuz(){
+      window.location.href = `showQuiz.html?subjectId=${subjectId}`;
+    }
+
 
     function loadCheck() {
       console.log("Loading check-in data");  // ตรวจสอบว่าฟังก์ชันถูกเรียกกี่ครั้ง
@@ -555,6 +614,33 @@
           }
         });
     }
+
+    document.getElementById("btn-qr").addEventListener("click", function(){
+      // แสดง modal สำหรับ QR Code
+      document.getElementById("qr-modal").style.display = "block";
+      // ล้าง container ก่อนสร้างใหม่ (กรณีคลิกหลายครั้ง)
+      document.getElementById("qr-code").innerHTML = "";
+      // สร้าง URL สำหรับการลงทะเบียนวิชาโดยใช้ subjectId
+      const registrationUrl = `https://yourdomain.com/register?subjectId=${subjectId}`;
+      // สร้าง QR Code ด้วย registrationUrl
+      new QRCode(document.getElementById("qr-code"), {
+        text: registrationUrl,
+        width: 128,
+        height: 128,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    });
+
+    function closeQR() {
+      document.getElementById("qr-modal").style.display = "none";
+    }
+
+    function goBack(){
+      window.location.href = `index.html`;
+    }
+
   </script>
 </body>
 </html>
