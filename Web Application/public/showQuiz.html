@@ -7,6 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
     /* กำหนดสไตล์พื้นฐาน */
     body {
@@ -42,11 +43,14 @@
     }
     /* ส่วนหัวแสดงข้อมูลวิชา */
     .header {
-      background-image: url('subject-bg.jpg'); /* รูปพื้นหลังของวิชา ควรเปลี่ยนเป็น dynamic */
+      min-height: 250px;
       background-size: cover;
       background-position: center;
-      color: #000000;
+      background-repeat: no-repeat;
       padding: 20px;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      transition: background-image 0.5s ease-in-out;
     }
      /* ========== สไตล์แท็บ ========== */
      .tab {
@@ -90,12 +94,12 @@
       align-items: flex-start;
     }
     .subject-code {
-      color: #000000;
+      color: #fffefe;
       font-size: 24px;
       font-weight: bold;
     }
     .subject-name {
-      color: #000000;
+      color: #ffffff;
       font-size: 20px;
       margin-top: 5px;
     }
@@ -246,8 +250,18 @@
       border: none;
       color: #fff;
       border-radius: 4px;
+      cursor: pointer; 
+    }
+    #btn-back{
+      margin-right: 10px;
+      padding: 8px 12px;
+      background-color: #007bff;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
       cursor: pointer;
-      
+      margin-left: auto;;
+
     }
     </style>
 </head>
@@ -264,6 +278,19 @@
     </div>
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
+      <button id="btn-back" onclick="goBack()">กลับไปหน้าหลัก</button>
+    </div>
+
+
+  </div>
+
+  <!-- Modal สำหรับแสดง QR Code -->
+  <div id="qr-modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeQR()">×</span>
+      <div id="qr-code">
+        <!-- QR Code จะแสดงที่นี่ -->
+      </div>
     </div>
   </div>
 
@@ -381,6 +408,33 @@
         function toggleManage() {
             window.location.href = `manageClass.html?subjectId=${subjectId}`;
         }
+
+        document.getElementById("btn-qr").addEventListener("click", function(){
+      // แสดง modal สำหรับ QR Code
+      document.getElementById("qr-modal").style.display = "block";
+      // ล้าง container ก่อนสร้างใหม่ (กรณีคลิกหลายครั้ง)
+      document.getElementById("qr-code").innerHTML = "";
+      // สร้าง URL สำหรับการลงทะเบียนวิชาโดยใช้ subjectId
+      const registrationUrl = `https://yourdomain.com/register?subjectId=${subjectId}`;
+      // สร้าง QR Code ด้วย registrationUrl
+      new QRCode(document.getElementById("qr-code"), {
+        text: registrationUrl,
+        width: 128,
+        height: 128,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    });
+
+    function closeQR() {
+      document.getElementById("qr-modal").style.display = "none";
+    }
+
+    function goBack(){
+      window.location.href = `index.html`;
+    }
+
     </script>
 </body>
 </html>

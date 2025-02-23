@@ -92,6 +92,8 @@
       color: #fff;
       border-radius: 4px;
       cursor: pointer;
+      display: flex;
+      justify-content: flex-start;
     }
     .header .buttons button:hover {
       background-color: #0056b3;
@@ -213,6 +215,16 @@
     #checkin-form-modal button:hover {
       background-color: #218838;
     }
+    #btn-back{
+      margin-right: 10px;
+      padding: 8px 12px;
+      background-color: #007bff;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: auto;;
+    }
   </style>
 </head>
 <body>
@@ -228,6 +240,7 @@
     </div>
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
+      <button id="btn-back" onclick="goBack()">กลับไปหน้าหลัก</button>
     </div>
   </div>
 
@@ -385,6 +398,10 @@
     }
     function toggleForback(){
       window.location.href = "index.html";
+    }
+
+    function goBack(){
+      window.location.href = `index.html`;
     }
 
   </script>
