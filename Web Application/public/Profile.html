@@ -48,11 +48,6 @@
     <div id="edit-form" class="hidden">
       <!-- ยังคงมี input file เผื่อในอนาคตหากผู้ใช้ต้องการอัปโหลด -->
       <input type="file" id="profile-image">
-      <input type="text" id="username" class="from" placeholder="ชื่อผู้ใช้">
-      <input type="email" id="email" class="from" placeholder="อีเมล">
-      <input type="tel" id="phone" class="from" placeholder="เบอร์โทร">
-      
-      <!-- ส่วนเลือก Avatar ที่เตรียมไว้ -->
       <div id="avatar-options">
         <!-- แก้ไข path ให้ถูกต้องโดยใช้ forward slashes -->
         <img src="asset/avatar1.png" class="avatar-option" data-url="asset/avatar1.png" alt="Avatar 1">
@@ -62,6 +57,12 @@
         <img src="asset/avatar5.png" class="avatar-option" data-url="asset/avatar5.png" alt="Avatar 5">
         <img src="asset/avatar6.png" class="avatar-option" data-url="asset/avatar6.png" alt="Avatar 6">
       </div>
+      <input type="text" id="username" class="from" placeholder="ชื่อผู้ใช้">
+      <input type="email" id="email" class="from" placeholder="อีเมล">
+      <input type="tel" id="phone" class="from" placeholder="เบอร์โทร">
+      
+      <!-- ส่วนเลือก Avatar ที่เตรียมไว้ -->
+      
     </div>
 
     <button id="edit-btn" onclick="toggleEdit(true)">แก้ไขข้อมูล</button>
