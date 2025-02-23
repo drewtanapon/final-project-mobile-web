@@ -270,9 +270,9 @@
   <!-- แถบแท็บ 3 ปุ่ม -->
 <div class="tab">
   <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
-  <a href="#" onclick="toManage()">จัดการนักเรียน</a>
-  <a href="#" onclick="toggleCheck()">เช็คชื่อ</a>
-  <a href="showQuiz.html"active onclick="toQiuz()">คำถาม</a>
+    <a href="#" onclick="toggleManage()">จัดการนักเรียน</a>
+    <a href="#" onclick="toggleCheck()">เช็คชื่อ</a>
+    <a href="#" class="active">คำถาม</a>
 </div>
     <div class="container">
         <h2>รายการคำถาม</h2>
@@ -303,6 +303,35 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+
+        firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        currentUserUID = user.uid;
+
+        db.collection("users")
+          .doc(currentUserUID)
+          .collection("classroom")
+          .doc(subjectId)
+          .onSnapshot((doc) => {
+            if (doc.exists) {
+              const data = doc.data();
+              document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
+              document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
+              // ✅ อัปเดต background-image ของ header
+              if (data.photo) {
+                document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
+              }
+            }
+        });
+        // ✅ โหลดรายการเช็คชื่อ หลังจากที่ currentUserUID ได้ค่าแล้ว
+        loadStudent();
+      }else {
+        console.log("ผู้ใช้ยังไม่ได้ล็อกอิน");
+      }
+    });
+
+
+
 
         firebase.auth().onAuthStateChanged(user => {
             if (user) {
@@ -344,15 +373,12 @@
             window.location.href = `createQuiz.html?subjectId=${subjectId}`;
         }
 
-        function toggleForback(){
-            window.location.href = `manageClass.html?subjectId=${subjectId}`;
-        }
-
+        
         function toggleCheck(){
          window.location.href = `checkin.html?subjectId=${subjectId}`;
         }
 
-        function toManage(subjectId) {
+        function toggleManage() {
             window.location.href = `manageClass.html?subjectId=${subjectId}`;
         }
     </script>
