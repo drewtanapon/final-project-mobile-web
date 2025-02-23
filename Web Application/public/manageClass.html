@@ -20,11 +20,14 @@
     }
     /* ส่วนหัวแสดงข้อมูลวิชา */
     .header {
-      background-image: url('subject-bg.jpg'); /* รูปพื้นหลังของวิชา ควรเปลี่ยนเป็น dynamic */
+      min-height: 250px;
       background-size: cover;
       background-position: center;
-      color: #000000;
+      background-repeat: no-repeat;
       padding: 20px;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      transition: background-image 0.5s ease-in-out;
     }
     .subject-info {
       display: flex;
@@ -32,12 +35,12 @@
       align-items: flex-start;
     }
     .subject-code {
-      color: #000000;
+      color: #fffefe;
       font-size: 24px;
       font-weight: bold;
     }
     .subject-name {
-      color: #000000;
+      color: #ffffff;
       font-size: 20px;
       margin-top: 5px;
     }
@@ -177,8 +180,8 @@
   </style>
 </head>
 <body>
-  <!-- ส่วนหัวแสดงข้อมูลวิชา -->
-  <div class="header">
+   <!-- ส่วนหัวแสดงข้อมูลวิชา -->
+   <div class="header" id="header">
     <div class="subject-info">
       <div class="subject-code">
         <p><strong>รหัสวิชา: </strong><span id="display-subjectCode"></span></p>
@@ -190,8 +193,8 @@
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
       <button id="btn-checkin">เพิ่มการเช็คชื่อ</button>
-      <button id="btn-check-in" onclick ="toCheckin()" >Check-in</button>
-      <button id="btn-createq" onclick="toggleCreateQiuz()">สร้างคำถาม</button>
+      <button id="btn-check-in" onclick="toCheckin()">Check-in</button>
+      <button id="btn-createq" onclick="toggleCreateQuiz()">สร้างคำถาม</button>
     </div>
   </div>
 
@@ -299,6 +302,10 @@
               const data = doc.data();
               document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
               document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
+              // ✅ อัปเดต background-image ของ header
+              if (data.photo) {
+                document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
+              }
             }
         });
         // ✅ โหลดรายการเช็คชื่อ หลังจากที่ currentUserUID ได้ค่าแล้ว
