@@ -297,9 +297,9 @@
   <!-- แถบแท็บ 3 ปุ่ม -->
 <div class="tab">
   <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
-    <a href="#" onclick="toggleManage()">จัดการนักเรียน</a>
-    <a href="#" onclick="toggleCheck()">เช็คชื่อ</a>
-    <a href="#" class="active">คำถาม</a>
+  <a href="#" onclick="toggleManage()">จัดการนักเรียน</a>
+  <a href="#" onclick="toggleCheck()">เช็คชื่อ</a>
+  <a href="showQuiz.html?subjectId=${subjectId}" onclick="toQiuz()">คำถาม</a>
 </div>
     <div class="container">
         <h2>รายการคำถาม</h2>
@@ -332,68 +332,29 @@
         const db = firebase.firestore();
 
         firebase.auth().onAuthStateChanged((user) => {
-      if (user) {
-        currentUserUID = user.uid;
+          if (user) {
+            currentUserUID = user.uid;
 
-        db.collection("users")
-          .doc(currentUserUID)
-          .collection("classroom")
-          .doc(subjectId)
-          .onSnapshot((doc) => {
-            if (doc.exists) {
-              const data = doc.data();
-              document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
-              document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
-              // ✅ อัปเดต background-image ของ header
-              if (data.photo) {
-                document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
-              }
-            }
-        });
-        // ✅ โหลดรายการเช็คชื่อ หลังจากที่ currentUserUID ได้ค่าแล้ว
-        loadStudent();
-      }else {
-        console.log("ผู้ใช้ยังไม่ได้ล็อกอิน");
-      }
-    });
-
-
-
-
-        firebase.auth().onAuthStateChanged(user => {
-            if (user) {
-                const userId = user.uid;
-                db.collection("users")
-                    .doc(userId)
-                    .collection("classroom")
-                    .doc(subjectId)
-                    .collection("question")
-                    .orderBy("question_no", "asc") // ✅ เรียงตาม question_no
-                    .get()
-                    .then(snapshot => {
-                        const questionList = document.getElementById("questionList");
-                        questionList.innerHTML = "";
-
-                        if (snapshot.empty) {
-                            questionList.innerHTML = `<tr><td colspan="3">ไม่มีคำถาม</td></tr>`;
-                            return;
-                        }
-
-                        snapshot.forEach(doc => {
-                            const data = doc.data();
-                            const row = `<tr>
-                                <td>${data.question_no}</td>
-                                <td>${data.question_text}</td>
-                                <td>${data.question_show ? '✅' : '❌'}</td>
-                            </tr>`;
-                            questionList.innerHTML += row;
-                        });
-                    })
-                    .catch(error => console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error));
-            } else {
-                alert("กรุณาเข้าสู่ระบบก่อน");
-                window.location.href = "login.html";
-            }
+            db.collection("users")
+              .doc(currentUserUID)
+              .collection("classroom")
+              .doc(subjectId)
+              .onSnapshot((doc) => {
+                if (doc.exists) {
+                  const data = doc.data();
+                  document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
+                  document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
+                  // ✅ อัปเดต background-image ของ header
+                  if (data.photo) {
+                    document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
+                  }
+                }
+            });
+            // ✅ โหลดรายการเช็คชื่อ หลังจากที่ currentUserUID ได้ค่าแล้ว
+            loadStudent();
+          }else {
+            console.log("ผู้ใช้ยังไม่ได้ล็อกอิน");
+          }
         });
 
         function toggleCreateQuiz(){
@@ -406,7 +367,7 @@
         }
 
         function toggleManage() {
-            window.location.href = `manageClass.html?subjectId=${subjectId}`;
+          window.location.href = `manageClass.html?subjectId=${subjectId}`;
         }
 
         document.getElementById("btn-qr").addEventListener("click", function(){
