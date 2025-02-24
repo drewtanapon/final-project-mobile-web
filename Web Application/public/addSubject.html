@@ -9,9 +9,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
+        /* เปลี่ยนพื้นหลังเป็น classroom.jfif เต็มจอ */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f8ff;
+            background: url("classroom.jfif") no-repeat center center fixed; /* ใช้รูป classroom.jfif */
+            background-size: cover;       /* ขยายรูปให้เต็มหน้าจอ */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -19,12 +21,13 @@
             margin: 0;
         }
         .container {
-            background: white;
+            background: rgba(88, 153, 50, 0.786);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0px 0px 10px #888888;
             width: 350px;
             text-align: center;
+            color: white;
         }
         input {
             width: calc(100% - 20px);
@@ -35,7 +38,7 @@
             display: block;
         }
         button {
-            background-color: #0000cc;
+            background-color: #864805;
             color: white;
             border: none;
             padding: 10px 15px;
@@ -45,7 +48,7 @@
             margin-top: 10px;
         }
         button:hover {
-            background-color: #000099;
+            background-color: #864805;
         }
         /* สไตล์สำหรับรูป Classroom Avatar */
         #classroom-options {
@@ -72,7 +75,6 @@
         <input type="text" id="code" placeholder="รหัสวิชา">
         <input type="text" id="name" placeholder="ชื่อวิชา">
         <div id="classroom-options">
-            <!-- แก้ไข path ให้ถูกต้องโดยใช้ forward slashes -->
             <img src="asset/classroom1.webp" class="classroom-option" data-url="asset/classroom1.webp" alt="Avatar 1">
             <img src="asset/classroom2.webp" class="classroom-option" data-url="asset/classroom2.webp" alt="Avatar 2">
             <img src="asset/classroom3.webp" class="classroom-option" data-url="asset/classroom3.webp" alt="Avatar 3">

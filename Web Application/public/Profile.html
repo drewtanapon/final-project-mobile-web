@@ -4,34 +4,92 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ข้อมูลส่วนตัว</title>
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+
   <style>
-    body { text-align: center; padding: 20px; background-color: #f0f8ff; }
-    .container { width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 10px #888888; }
-    input, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; }
-    button { background-color: #0000cc; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: #000099; }
-    .hidden { display: none; }
-    img { border-radius: 50%; }
-    .from { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    /* ปรับพื้นหลังเป็น GIF แบบเต็มหน้าจอ */
+    body {
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      background: url("พื้นหลังหน้าโปรไฟล์.gif") no-repeat center center fixed;
+      background-size: cover; /* ขยายให้เต็มจอ */
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 400px;
+      margin: auto;
+      background: rgba(97, 140, 45, 0.882);
+      color: rgb(255, 255, 255);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px #ffffff;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #6c471a;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #4e3311;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    img {
+      border-radius: 50%;
+    }
+
+    .from {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
     /* สไตล์สำหรับ Avatar Options */
     #avatar-options {
       display: flex;
-      justify-content: center;
+      flex-direction: column; /* จัดเป็น 2 แถว */
       gap: 10px;
       margin-top: 10px;
     }
-    #avatar-options img {
+
+    .avatar-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .avatar-option {
       width: 80px;
       height: 80px;
       cursor: pointer;
       border: 2px solid transparent;
       border-radius: 50%;
     }
-    #avatar-options img.selected {
+
+    .avatar-option.selected {
       border-color: blue;
     }
   </style>
@@ -39,30 +97,50 @@
 <body>
   <div class="container">
     <h2>ข้อมูลส่วนตัว</h2>
-    <img id="profile-pic" src="imageprofiledefault.jpg" alt="Profile Picture" width="100">
+    <!-- HTML -->
+  <img id="profile-pic" src="imageprofiledefault.jpg" alt="Profile Picture">
+  <!-- CSS -->
+  <style>
+  #profile-pic {
+    width: 100px;       /* ความกว้าง */
+    height: 100px;      /* ความสูงเท่ากับความกว้าง */
+    border-radius: 50%; /* ทำให้เป็นวงกลม */
+    object-fit: cover;  /* ครอบตัดภาพตามสัดส่วน */
+  }
+</style>
+
     <p><strong>ชื่อ:</strong> <span id="display-username"></span></p>
     <p><strong>อีเมล:</strong> <span id="display-email"></span></p>
     <p><strong>เบอร์โทร:</strong> <span id="display-phone"></span></p>
 
     <!-- ฟอร์มแก้ไข -->
     <div id="edit-form" class="hidden">
-      <!-- ยังคงมี input file เผื่อในอนาคตหากผู้ใช้ต้องการอัปโหลด -->
+      <!-- Input file เผื่ออัปโหลดรูปเอง -->
       <input type="file" id="profile-image">
+
+      <!-- ตัวเลือก Avatar ที่เตรียมไว้ -->
       <div id="avatar-options">
-        <!-- แก้ไข path ให้ถูกต้องโดยใช้ forward slashes -->
-        <img src="asset/avatar1.png" class="avatar-option" data-url="asset/avatar1.png" alt="Avatar 1">
-        <img src="asset/avatar2.png" class="avatar-option" data-url="asset/avatar2.png" alt="Avatar 2">
-        <img src="asset/avatar3.png" class="avatar-option" data-url="asset/avatar3.png" alt="Avatar 3">
-        <img src="asset/avatar4.png" class="avatar-option" data-url="asset/avatar4.png" alt="Avatar 4">
-        <img src="asset/avatar5.png" class="avatar-option" data-url="asset/avatar5.png" alt="Avatar 5">
-        <img src="asset/avatar6.png" class="avatar-option" data-url="asset/avatar6.png" alt="Avatar 6">
+        <!-- 🔹 แถวบน: Avatar1,2,3 + oldAvatar (รูปเก่าที่เพิ่งเปลี่ยน) -->
+        <div class="avatar-row"> 
+          <!-- oldAvatar (จะแสดงเฉพาะถ้ามี oldPhotoURL) -->
+          <img id="oldAvatar" class="avatar-option" data-url="" alt="Old Avatar" style="display: none;">
+          <img src="asset/avatar1.png" class="avatar-option" data-url="asset/avatar1.png" alt="Avatar 1">
+          <img src="asset/avatar2.png" class="avatar-option" data-url="asset/avatar2.png" alt="Avatar 2">
+          <img src="asset/avatar3.png" class="avatar-option" data-url="asset/avatar3.png" alt="Avatar 3">
+
+        </div>
+
+        <!-- 🔹 แถวล่าง: Avatar4,5,6 -->
+        <div class="avatar-row">
+          <img src="asset/avatar4.png" class="avatar-option" data-url="asset/avatar4.png" alt="Avatar 4">
+          <img src="asset/avatar5.png" class="avatar-option" data-url="asset/avatar5.png" alt="Avatar 5">
+          <img src="asset/avatar6.png" class="avatar-option" data-url="asset/avatar6.png" alt="Avatar 6">
+        </div>
       </div>
+
       <input type="text" id="username" class="from" placeholder="ชื่อผู้ใช้">
       <input type="email" id="email" class="from" placeholder="อีเมล">
       <input type="tel" id="phone" class="from" placeholder="เบอร์โทร">
-      
-      <!-- ส่วนเลือก Avatar ที่เตรียมไว้ -->
-      
     </div>
 
     <button id="edit-btn" onclick="toggleEdit(true)">แก้ไขข้อมูล</button>
@@ -72,7 +150,7 @@
   </div>
 
   <script>
-    // 🔥 ตั้งค่า Firebase
+    // (1) ตั้งค่า Firebase Config (เปลี่ยนเป็นของจริง)
     const firebaseConfig = {
       apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
       authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
@@ -80,30 +158,51 @@
       storageBucket: "webmobileapplication-cdaaf.appspot.com",
     };
     firebase.initializeApp(firebaseConfig);
+
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    let currentUserUID = ""; // UID ของผู้ใช้ที่ล็อกอิน
-    let selectedAvatarUrl = ""; // เก็บ URL ของ Avatar ที่เลือกจากตัวเลือก
+    let currentUserUID = "";
+    let selectedAvatarUrl = "";
 
-    // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
-    firebase.auth().onAuthStateChanged((user) => {
+    // (2) ตั้งค่า Persistence แบบ Promise then/catch
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      .then(() => {
+        console.log("Persistence set to LOCAL");
+      })
+      .catch(err => {
+        console.error("Error setting persistence:", err);
+      });
+
+    // (3) ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
+    firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
-        currentUserUID = user.uid; // ใช้ UID เป็น Document ID
-
-        // ดึงข้อมูลแบบเรียลไทม์
+        currentUserUID = user.uid;
+        // ดึงข้อมูลผู้ใช้แบบเรียลไทม์
         db.collection("users").doc(currentUserUID).onSnapshot(doc => {
           if (doc.exists) {
             const data = doc.data();
             document.getElementById("display-username").innerText = data.displayName || "ไม่ระบุ";
             document.getElementById("display-email").innerText = data.email || user.email;
-            document.getElementById("display-phone").innerText = data.phone;
+            document.getElementById("display-phone").innerText = data.phone || "-";
+
             const profilePic = document.getElementById("profile-pic");
             profilePic.src = data.photoURL ? data.photoURL : "imageprofiledefault.jpg";
+
+            // ถ้ามี oldPhotoURL → โชว์ใน oldAvatar
+            if (data.oldPhotoURL) {
+              const oldAvatarEl = document.getElementById("oldAvatar");
+              oldAvatarEl.src = data.oldPhotoURL;
+              oldAvatarEl.dataset.url = data.oldPhotoURL;
+              oldAvatarEl.style.display = "inline-block"; // แสดงรูป
+            }
+          } else {
+            console.warn("⚠️ ไม่พบข้อมูลใน Firestore");
           }
         });
       } else {
-        window.location.href = "login.html"; // ถ้าไม่ได้ล็อกอิน ให้กลับไปหน้า Login
+        // ถ้าไม่ได้ล็อกอิน ให้กลับไปหน้า Login
+        window.location.href = "login.html";
       }
     });
 
@@ -113,6 +212,7 @@
       document.getElementById("edit-btn").classList.toggle("hidden", editMode);
       document.getElementById("save-btn").classList.toggle("hidden", !editMode);
       document.getElementById("cancel-btn").classList.toggle("hidden", !editMode);
+
       if (editMode) {
         document.getElementById("username").value = document.getElementById("display-username").innerText;
         document.getElementById("email").value = document.getElementById("display-email").innerText;
@@ -124,9 +224,7 @@
     const avatarOptions = document.querySelectorAll(".avatar-option");
     avatarOptions.forEach(option => {
       option.addEventListener("click", function(){
-        // เก็บ URL ของ Avatar ที่เลือก
         selectedAvatarUrl = this.getAttribute("data-url");
-        // highlight รูปที่เลือกด้วยการเพิ่ม class "selected"
         avatarOptions.forEach(o => o.classList.remove("selected"));
         this.classList.add("selected");
       });
@@ -135,30 +233,42 @@
     // ฟังก์ชันบันทึกข้อมูล Profile
     async function saveProfile() {
       if (!currentUserUID) return;
+
       const username = document.getElementById("username").value;
       const email = document.getElementById("email").value;
       const phone = document.getElementById("phone").value;
       const file = document.getElementById("profile-image").files[0];
 
-      let updateData = { 
-        username, 
-        email, 
-        phone 
+      let updateData = {
+        displayName: username,
+        email: email,
+        phone: phone
       };
 
       try {
-        // หากผู้ใช้เลือกไฟล์ ให้ใช้ Firebase Storage ในการอัปโหลด
+        // 1) ดึง doc เดิมก่อน เพื่อรู้ photoURL เดิม
+        const userDoc = await db.collection("users").doc(currentUserUID).get();
+        let oldPhoto = userDoc.exists && userDoc.data().photoURL ? userDoc.data().photoURL : "";
+
+        // 2) หากผู้ใช้เลือกไฟล์ → อัปโหลดไฟล์ใหม่
         if (file) {
           const storageRef = storage.ref(`profile_pictures/${currentUserUID}`);
           const snapshot = await storageRef.put(file);
-          const url = await snapshot.getDownloadURL();
+          const url = await snapshot.ref.getDownloadURL();
           updateData.photoURL = url;
+          if (oldPhoto) {
+            updateData.oldPhotoURL = oldPhoto;
+          }
         }
-        // หากไม่มีไฟล์และมีการเลือก Avatar จากตัวเลือก ให้ใช้ Avatar ที่เลือก
+        // 3) ถ้าไม่ได้อัปโหลดไฟล์ แต่เลือก Avatar ใหม่
         else if (selectedAvatarUrl) {
           updateData.photoURL = selectedAvatarUrl;
+          if (oldPhoto) {
+            updateData.oldPhotoURL = oldPhoto;
+          }
         }
 
+        // 4) อัปเดต Firestore
         await db.collection("users").doc(currentUserUID).set(updateData, { merge: true });
         alert("บันทึกสำเร็จ!");
         location.reload();
