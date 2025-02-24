@@ -3,69 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <title>เช็คชื่อ</title>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
-    <!-- QRCode.js Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+  <!-- QRCode.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
   <style>
-    /* กำหนดสไตล์พื้นฐาน */
+    /* สไตล์พื้นฐาน */
     body {
       font-family: 'Helvetica', 'Arial', sans-serif;
       margin: 0;
       padding: 0;
       background-color: #f4f4f4;
     }
-    /* ส่วนหัวแสดงข้อมูลวิชา */
+    /* ส่วนหัว */
     .header {
-      background-image: url('subject-bg.jpg'); /* รูปพื้นหลังของวิชา ควรเปลี่ยนเป็น dynamic */
+      background-image: url('subject-bg.jpg'); /* เปลี่ยนเป็น dynamic ได้ */
       background-size: cover;
       background-position: center;
       padding: 20px;
       min-height: 250px;
       background-repeat: no-repeat;
       color: white;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
       transition: background-image 0.5s ease-in-out;
-    }
-     /* ========== สไตล์แท็บ ========== */
-     .tab {
-      display: flex;
-      background-color: #ccc;
-      border-radius: 8px 8px 0 0;
-      overflow: hidden;
-    }
-    .tab a {
-      flex: 1;
-      text-align: center;
-      background-color: inherit;
-      text-decoration: none;
-      padding: 14px 16px;
-      cursor: pointer;
-      transition: 0.3s;
-      font-size: 16px;
-      border-right: 1px solid #bbb;
-      color: #000;
-    }
-    .tab a:last-child {
-      border-right: none;
-    }
-    .tab a:hover {
-      background-color: #ddd;
-    }
-    .tab a.active {
-      background-color: #fff;
-      font-weight: bold;
-    }
-    .tabcontent {
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 0 8px 8px 8px;
-      box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
     }
     .subject-info {
       display: flex;
@@ -82,7 +46,7 @@
       font-size: 20px;
       margin-top: 5px;
     }
-    /* ปุ่มในส่วนหัว */
+    /* ปุ่มใน header */
     .header .buttons {
       margin-top: 15px;
     }
@@ -94,13 +58,20 @@
       color: #fff;
       border-radius: 4px;
       cursor: pointer;
-      display: flex;
-      justify-content: flex-start;
+      display: inline-block;
+      transition: background-color 0.3s;
     }
     .header .buttons button:hover {
       background-color: #0056b3;
     }
-    /* ========== สไตล์แท็บ ========== */
+    /* ปุ่มสำหรับเปิด/ปิดเช็คชื่อ */
+    .header .buttons .checkin-btn {
+      background-color: #28a745;
+    }
+    .header .buttons .checkin-btn:hover {
+      background-color: #218838;
+    }
+    /* แถบแท็บ */
     .tab {
       display: flex;
       background-color: #ccc;
@@ -119,40 +90,18 @@
       border-right: 1px solid #bbb;
       color: #000;
     }
-    .tab a:last-child {
-      border-right: none;
-    }
-    .tab a:hover {
-      background-color: #ddd;
-    }
-    .tab a.active {
-      background-color: #fff;
-      font-weight: bold;
-    }
-    /* ส่วนคอนเทนต์หลัก */
+    .tab a:last-child { border-right: none; }
+    .tab a:hover { background-color: #ddd; }
+    .tab a.active { background-color: #fff; font-weight: bold; }
+    /* คอนเทนต์หลัก */
     .container {
       background-color: #fff;
       padding: 20px;
-      border-radius: 0 8px 8px 8px;
+      border-radius: 8px;
       box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
-    /* ตารางแสดงนักเรียนที่ลงทะเบียน */
-    .student-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    .student-table th, .student-table td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-    .student-table th {
-      background-color: #007bff;
-      color: #fff;
-    }
-    /* ส่วนประวัติการเช็คชื่อ */
+    /* ตารางประวัติ */
     .history {
       margin-top: 30px;
     }
@@ -167,12 +116,12 @@
       padding: 10px;
       border-bottom: 1px solid #ddd;
     }
-    /* Modal สำหรับแสดง QR Code */
+    /* Modal สำหรับ QR Code */
     #qr-modal {
       display: none;
       position: fixed;
-      top:0;
-      left:0;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       background: rgba(0,0,0,0.5);
@@ -197,8 +146,8 @@
     #checkin-modal {
       display: none;
       position: fixed;
-      top:0;
-      left:0;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       background: rgba(0,0,0,0.5);
@@ -211,9 +160,7 @@
       border-radius: 8px;
       position: relative;
     }
-    #checkin-modal .modal-content h3 {
-      margin-top: 0;
-    }
+    #checkin-modal .modal-content h3 { margin-top: 0; }
     #checkin-modal .close {
       position: absolute;
       top: 10px;
@@ -222,13 +169,8 @@
       font-size: 18px;
     }
     /* สไตล์ฟอร์มใน Modal */
-    #checkin-form-modal div {
-      margin-bottom: 10px;
-    }
-    #checkin-form-modal label {
-      display: block;
-      margin-bottom: 5px;
-    }
+    #checkin-form-modal div { margin-bottom: 10px; }
+    #checkin-form-modal label { display: block; margin-bottom: 5px; }
     #checkin-form-modal input {
       width: 100%;
       padding: 6px;
@@ -242,10 +184,9 @@
       border-radius: 4px;
       cursor: pointer;
     }
-    #checkin-form-modal button:hover {
-      background-color: #218838;
-    }
-    #btn-back{
+    #checkin-form-modal button:hover { background-color: #218838; }
+    /* ปุ่มย้อนกลับ */
+    #btn-back {
       margin-right: 10px;
       padding: 8px 12px;
       background-color: #007bff;
@@ -253,13 +194,12 @@
       color: #fff;
       border-radius: 4px;
       cursor: pointer;
-      margin-left: auto;;
-
+      margin-left: auto;
     }
   </style>
 </head>
 <body>
-  <!-- ส่วนหัวแสดงข้อมูลวิชา -->
+  <!-- ส่วนหัว -->
   <div class="header" id="header">
     <div class="subject-info">
       <div class="subject-code">
@@ -272,8 +212,12 @@
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
       <button id="btn-back" onclick="goBack()">กลับไปหน้าหลัก</button>
+      <!-- ปุ่มสำหรับเปิด/ปิดเช็คชื่อ -->
+      <button id="btn-open-checkin" class="checkin-btn">เปิดเช็คชื่อ</button>
+      <button id="btn-close-checkin" class="checkin-btn">ปิดเช็คชื่อ</button>
     </div>
   </div>
+
   <!-- Modal สำหรับแสดง QR Code -->
   <div id="qr-modal">
     <div class="modal-content">
@@ -284,22 +228,19 @@
     </div>
   </div>
 
-  <!-- แถบแท็บ 3 ปุ่ม -->
-<div class="tab">
-  <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
-  <a href="#" onclick="toggleManage()">จัดการนักเรียน</a>
-  <a href="#" class="active">เช็คชื่อ</a>
-  <a href="#" onclick="toggleQiuz()">คำถาม</a>
-</div>
+  <!-- แถบแท็บ -->
+  <div class="tab">
+    <a href="#" onclick="toggleManage()">จัดการนักเรียน</a>
+    <a href="#" class="active">เช็คชื่อ</a>
+    <a href="#" onclick="toQuiz()">คำถาม</a>
+  </div>
 
-
-  <!-- เนื้อหาแท็บนี้ -->
+  <!-- เนื้อหาแท็บ -->
   <div class="container">
     <button id="btn-checkin">เพิ่มการเช็คชื่อ</button>
     <div class="history">
       <h3>ประวัติการเช็คชื่อ</h3>
       <ul id="checkin-history">
-        <!-- รายการประวัติจะถูกเติมที่นี่ -->
         <li id="checkin-list"></li>
       </ul>
     </div>
@@ -333,20 +274,20 @@
   </div>
 
   <script>
-    // ดึง subjectId จาก query string
+    // ดึง subjectId จาก query string หรือ sessionStorage
     let urlParams = new URLSearchParams(window.location.search);
     let subjectId = urlParams.get('subjectId') || sessionStorage.getItem('subjectId');
-
-    console.log(subjectId);
-    // ถ้า subjectId ไม่มีค่า ให้ดึงจาก sessionStorage
     if (!subjectId) {
-        console.error("❌ ไม่พบ subjectId");
+      console.error("❌ ไม่พบ subjectId");
     } else {
-        console.log("✅ subjectId:", subjectId);
-        sessionStorage.setItem('subjectId', subjectId); // เก็บค่าไว้ใช้ในหน้าอื่น
+      console.log("✅ subjectId:", subjectId);
+      sessionStorage.setItem('subjectId', subjectId);
     }
 
     let currentUserUID = "";
+    // ตัวแปรเก็บ checkinCode ปัจจุบัน
+    let currentCheckinCode = "";
+
     const firebaseConfig = {
       apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
       authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
@@ -355,9 +296,8 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const storage = firebase.storage();
 
-    // ดึงข้อมูลรายวิชาจาก Firestore ด้วย subjectId
+    // ดึงข้อมูลวิชา
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         currentUserUID = user.uid;
@@ -370,275 +310,38 @@
               const data = doc.data();
               document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
               document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
-              // ✅ อัปเดต background-image ของ header
               if (data.photo) {
                 document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
               }
             }
-        });
+          });
         loadCheck();
-      }else {
+        // โหลดคะแนนนักเรียนจาก check-in ล่าสุด (สำหรับหน้า manageClass)
+        loadStudentScores();
+      } else {
         console.log("ผู้ใช้ยังไม่ได้ล็อกอิน");
       }
     });
 
+    // ฟังก์ชันนำทาง
     function toggleManage() {
-        window.location.href = `manageClass.html?subjectId=${subjectId}`;
+      window.location.href = `manageClass.html?subjectId=${subjectId}`;
     }
-    function toggleQiuz() {
-        window.location.href = `showQuiz.html?subjectId=${subjectId}`;
-    }
-
-    // เมื่อคลิกปุ่มเพิ่มการเช็คชื่อ
-    document.getElementById("btn-checkin").addEventListener("click", function(){
-      document.getElementById("checkin-modal").style.display = "block";
-    });
-
-    // เมื่อคลิกปุ่มปิดใน Modal การเช็คชื่อ
-    document.getElementById("close-checkin-modal").addEventListener("click", function(){
-      document.getElementById("checkin-modal").style.display = "none";
-    });
-
-    // จัดการการส่งฟอร์มใน Modal สำหรับสร้างเช็คชื่อใหม่
-    document.getElementById("checkin-form-modal").addEventListener("submit", function(event) {
-      event.preventDefault();
-
-      const checkinCode = document.getElementById("modal-checkin-code").value;
-      const startTime = new Date(document.getElementById("modal-start-time").value).getTime();
-      const lateTime = new Date(document.getElementById("modal-late-time").value).getTime();
-      const closeTime = new Date(document.getElementById("modal-close-time").value).getTime();
-
-      // สร้างเอกสารใหม่ที่ path: /classroom/{cid}/checkin/{checkinCode}
-      db.collection("users").doc(currentUserUID).collection("classroom").doc(subjectId).collection("checkin").doc(checkinCode).set({
-        checkinCode: checkinCode,
-        startTime: startTime,
-        lateTime: lateTime,
-        closeTime: closeTime,
-        createdAt: Date.now()
-      }).then(() => {
-        alert("สร้างการเช็คชื่อสำเร็จ!");
-        document.getElementById("checkin-modal").style.display = "none";
-
-        // ขั้นตอนคัดลอกรายชื่อนักเรียนจาก /classroom/{cid}/students
-        // ไปยัง /classroom/{cid}/checkin/{checkinCode}/scores โดยกำหนด status = 0
-        db.collection("classroom").doc(cid).collection("students").get().then((querySnapshot) => {
-          querySnapshot.forEach((doc) => {
-            const studentData = doc.data();
-            db.collection("classroom").doc(cid).collection("checkin").doc(checkinCode)
-              .collection("scores").doc(doc.id).set({
-                status: 0,
-                studentName: studentData.name || ""
-              });
-          });
-        }).catch((error) => {
-          console.error("เกิดข้อผิดพลาดในการคัดลอกรายชื่อนักเรียน: ", error);
-        });
-      }).catch((error) => {
-        console.error("เกิดข้อผิดพลาดในการสร้างเช็คชื่อ: ", error);
-      });
-    });
-    let unsubscribeCheckin = null;
-
-    function toggleCheck(){
-      window.location.href = `checkin.html?subjectId=${subjectId}`;
-    }
-
-    function toggleQiuz(){
+    function toQuiz() {
       window.location.href = `showQuiz.html?subjectId=${subjectId}`;
     }
-
-
-    function loadCheck() {
-      console.log("Loading check-in data");  // ตรวจสอบว่าฟังก์ชันถูกเรียกกี่ครั้ง
-
-      const CheckList = document.getElementById("checkin-list");
-      CheckList.innerHTML = "<li>กำลังโหลดข้อมูล...</li>";
-
-      if (!currentUserUID || !subjectId) {
-          console.error("❌ currentUserUID หรือ subjectId ไม่มีค่า");
-          return;
-      }
-
-      db.collection("users")
-        .doc(currentUserUID)
-        .collection("classroom")
-        .doc(subjectId)
-        .collection("checkin")
-        .orderBy("createdAt", "desc")
-        .onSnapshot((querySnapshot) => {
-            CheckList.innerHTML = ""; // ล้างข้อมูลเก่า
-            if (querySnapshot.empty) {
-                CheckList.innerHTML = "<li>ไม่มีรายการเช็คชื่อ</li>";
-                return;
-              }
-
-              const ol = document.createElement("ol");
-              querySnapshot.forEach((doc) => {
-                  const checkData = doc.data();
-                  console.log("📌 ข้อมูลเช็คชื่อที่โหลด: ", checkData);
-
-                  const li = document.createElement("li");
-                  li.textContent = `${new Date(checkData.startTime).toLocaleString()} - ${checkData.checkinCode}`;
-
-                  const detailDiv = document.createElement("div");
-                  detailDiv.style.display = "none";
-                  detailDiv.style.marginTop = "5px";
-                  detailDiv.style.paddingLeft = "20px";
-
-                  const table = document.createElement("table");
-                  table.style.width = "100%";
-                  table.style.borderCollapse = "collapse";
-                  table.innerHTML = `
-                      <thead>
-                          <tr>
-                              <th style="border: 1px solid #ddd; padding: 8px;">ลำดับ</th>
-                              <th style="border: 1px solid #ddd; padding: 8px;">เลขประจำตัว</th>
-                              <th style="border: 1px solid #ddd; padding: 8px;">ชื่อ</th>
-                              <th style="border: 1px solid #ddd; padding: 8px;">สถานะ</th>
-                              <th style="border: 1px solid #ddd; padding: 8px;">วันที่</th>
-                              <th style="border: 1px solid #ddd; padding: 8px;">เวลา</th>
-                              <th style="border: 1px solid #ddd; padding: 8px;">หมายเหตุ</th>
-                          </tr>
-                      </thead>
-                      <tbody id="studentTableBody-${checkData.checkinCode}">
-                          <tr>
-                              <td colspan="7" style="border: 1px solid #ddd; padding: 8px;">กดดูรายชื่อเพื่อโหลดข้อมูล</td>
-                          </tr>
-                      </tbody>
-                  `;
-                  detailDiv.appendChild(table);
-
-                  li.addEventListener("click", () => {
-                      if (detailDiv.style.display === "none") {
-                          detailDiv.style.display = "block";
-                          loadCheckinStudents(currentUserUID, subjectId, checkData.checkinCode);
-                      } else {
-                          detailDiv.style.display = "none";
-                      }
-                  });
-
-                  li.appendChild(detailDiv);
-                  ol.appendChild(li);
-              });
-
-              CheckList.appendChild(ol);
-          });
+    function goBack() {
+      window.location.href = "index.html";
+    }
+    function closeQR() {
+      document.getElementById("qr-modal").style.display = "none";
     }
 
-    function loadCheckinStudents(currentUserUID, subjectId, checkinCode) {
-      if (!currentUserUID || !subjectId || !checkinCode) {
-          console.error("❌ ข้อมูลไม่ครบ: currentUserUID, subjectId หรือ checkinCode ไม่มีค่า");
-          return;
-      }
-
-      const tbody = document.getElementById(`studentTableBody-${checkinCode}`);
-      tbody.innerHTML = "<tr><td colspan='7'>กำลังโหลดข้อมูล...</td></tr>";
-
-      let studentDataMap = {}; // เก็บข้อมูลนักเรียนทั้งหมดที่มีรายวิชานี้
-
-      // 📌 ดึงนักเรียนที่ลงทะเบียนเรียนในวิชานี้จาก Student Collection
-      db.collection("Student")
-          .get()
-          .then((studentQuery) => {
-              let studentPromises = [];
-
-              studentQuery.forEach((studentDoc) => {
-                  let studentId = studentDoc.id;
-                  let subjectRef = db.collection("Student").doc(studentId).collection("subjectList").doc(subjectId);
-
-                  studentPromises.push(
-                      subjectRef.get().then((subjectDoc) => {
-                          if (subjectDoc.exists) {
-                              let studentData = studentDoc.data();
-                              studentDataMap[studentId] = {
-                                  sid: studentData.sid || "-",
-                                  name: studentData.name || "-",
-                                  status: "-",
-                                  date: "-",
-                                  time: "-",
-                                  remake: "-",
-                              };
-                          }
-                      })
-                  );
-              });
-
-              // 📌 รอให้ดึงข้อมูลทั้งหมดเสร็จ
-              return Promise.all(studentPromises);
-          })
-          .then(() => {
-              console.log("📌 นักเรียนที่ลงทะเบียนในวิชา:", studentDataMap);
-
-              // 📌 ดึงข้อมูลสถานะการเช็คชื่อจาก Check-in Collection
-              db.collection("users")
-                  .doc(currentUserUID)
-                  .collection("classroom")
-                  .doc(subjectId)
-                  .collection("checkin")
-                  .doc(checkinCode)
-                  .collection("Student")
-                  .get()
-                  .then((checkinQuery) => {
-                      checkinQuery.forEach((doc) => {
-                          let studentId = doc.id;
-                          if (studentDataMap[studentId]) {
-                              studentDataMap[studentId].status = doc.data().status || "-";
-                              studentDataMap[studentId].date = doc.data().date || "-";
-                              studentDataMap[studentId].time = doc.data().time || "-";
-                              studentDataMap[studentId].remake = doc.data().remake || "-";
-                          }
-                      });
-
-                      // 📌 อัปเดตตาราง
-                      tbody.innerHTML = ""; // ล้างข้อมูลเก่า
-                      let index = 1;
-                      for (const studentId in studentDataMap) {
-                          const student = studentDataMap[studentId];
-                          const tr = document.createElement("tr");
-                          tr.innerHTML = `
-                              <td style="border: 1px solid #ddd; padding: 8px;">${index++}</td>
-                              <td style="border: 1px solid #ddd; padding: 8px;">${student.sid}</td>
-                              <td style="border: 1px solid #ddd; padding: 8px;">${student.name}</td>
-                              <td style="border: 1px solid #ddd; padding: 8px;">${student.status}</td>
-                              <td style="border: 1px solid #ddd; padding: 8px;">${student.date}</td>
-                              <td style="border: 1px solid #ddd; padding: 8px;">${student.time}</td>
-                              <td style="border: 1px solid #ddd; padding: 8px;">${student.remake}</td>
-                          `;
-                          tbody.appendChild(tr);
-                      }
-                  })
-                  .catch((error) => {
-                      console.error("❌ เกิดข้อผิดพลาดในการโหลดสถานะเช็คชื่อ: ", error);
-                  });
-          })
-          .catch((error) => {
-              console.error("❌ เกิดข้อผิดพลาดในการโหลดนักเรียน: ", error);
-          });
-    }
-
-    function loadSubjectInfo() {
-      db.collection("users")
-        .doc(currentUserUID)
-        .collection("classroom")
-        .doc(subjectId)
-        .get()
-        .then((doc) => {
-          if (doc.exists) {
-            const data = doc.data();
-            document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
-            document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
-          }
-        });
-    }
-
+    // แสดง QR Code
     document.getElementById("btn-qr").addEventListener("click", function(){
-      // แสดง modal สำหรับ QR Code
       document.getElementById("qr-modal").style.display = "block";
-      // ล้าง container ก่อนสร้างใหม่ (กรณีคลิกหลายครั้ง)
       document.getElementById("qr-code").innerHTML = "";
-      // สร้าง URL สำหรับการลงทะเบียนวิชาโดยใช้ subjectId
       const registrationUrl = `https://yourdomain.com/register?subjectId=${subjectId}`;
-      // สร้าง QR Code ด้วย registrationUrl
       new QRCode(document.getElementById("qr-code"), {
         text: registrationUrl,
         width: 128,
@@ -649,14 +352,391 @@
       });
     });
 
-    function closeQR() {
-      document.getElementById("qr-modal").style.display = "none";
+    // ปุ่มเพิ่มการเช็คชื่อ (แสดง modal)
+    document.getElementById("btn-checkin").addEventListener("click", function(){
+      document.getElementById("checkin-modal").style.display = "block";
+    });
+
+    // ปุ่มปิด modal เช็คชื่อ
+    document.getElementById("close-checkin-modal").addEventListener("click", function(){
+      document.getElementById("checkin-modal").style.display = "none";
+    });
+
+    // ปุ่มเปิดเช็คชื่อ
+    document.getElementById("btn-open-checkin").addEventListener("click", function(){
+      if (!currentCheckinCode) {
+        alert("ยังไม่มีการสร้างการเช็คชื่อ");
+        return;
+      }
+      db.collection("users")
+        .doc(currentUserUID)
+        .collection("classroom")
+        .doc(subjectId)
+        .collection("checkin")
+        .doc(currentCheckinCode)
+        .update({ status: "open" })
+        .then(() => {
+          alert("เปิดเช็คชื่อแล้ว");
+        })
+        .catch((error) => {
+          console.error("❌ Error opening check-in:", error);
+        });
+    });
+
+    // ปุ่มปิดเช็คชื่อและอัปเดตคะแนน
+    document.getElementById("btn-close-checkin").addEventListener("click", function(){
+      if (!currentCheckinCode) {
+        alert("ยังไม่มีการสร้างการเช็คชื่อ");
+        return;
+      }
+      db.collection("users")
+        .doc(currentUserUID)
+        .collection("classroom")
+        .doc(subjectId)
+        .collection("checkin")
+        .doc(currentCheckinCode)
+        .update({ status: "closed" })
+        .then(() => {
+          // หลังจากปิดเช็คชื่อ ให้อัปเดตคะแนนใน subcollection "scores"
+          db.collection("users")
+            .doc(currentUserUID)
+            .collection("classroom")
+            .doc(subjectId)
+            .collection("checkin")
+            .doc(currentCheckinCode)
+            .collection("scores")
+            .get()
+            .then((snapshot) => {
+              snapshot.forEach((doc) => {
+                const data = doc.data();
+                // ถ้านักศึกษามีสถานะ "มา" ให้เพิ่มคะแนน 1
+                if (data.status === "มา") {
+                  let newScore = (data.score || 0) + 1;
+                  doc.ref.update({ score: newScore });
+                }
+              });
+              alert("ปิดเช็คชื่อและอัปเดตคะแนนเรียบร้อยแล้ว");
+            })
+            .catch((error) => {
+              console.error("❌ Error updating scores:", error);
+            });
+        })
+        .catch((error) => {
+          console.error("❌ Error closing check-in:", error);
+        });
+    });
+
+    // บันทึกการสร้างเช็คชื่อใหม่ (ใน modal)
+    document.getElementById("checkin-form-modal").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const checkinCode = document.getElementById("modal-checkin-code").value;
+      const startTime = new Date(document.getElementById("modal-start-time").value).getTime();
+      const lateTime = new Date(document.getElementById("modal-late-time").value).getTime();
+      const closeTime = new Date(document.getElementById("modal-close-time").value).getTime();
+
+      // สร้างเอกสาร checkin ใหม่ใน path:
+      // /users/{currentUserUID}/classroom/{subjectId}/checkin/{checkinCode}
+      db.collection("users")
+        .doc(currentUserUID)
+        .collection("classroom")
+        .doc(subjectId)
+        .collection("checkin")
+        .doc(checkinCode)
+        .set({
+          checkinCode: checkinCode,
+          startTime: startTime,
+          lateTime: lateTime,
+          closeTime: closeTime,
+          createdAt: Date.now()
+        })
+        .then(() => {
+          alert("สร้างการเช็คชื่อสำเร็จ!");
+          document.getElementById("checkin-modal").style.display = "none";
+          currentCheckinCode = checkinCode; // เก็บ checkinCode ปัจจุบัน
+
+          // คัดลอกรายชื่อนักเรียนจาก collection "Student" ของวิชา
+          // ไปยัง subcollection "scores" ของเอกสาร checkin ที่สร้างขึ้น
+          db.collection("users")
+            .doc(currentUserUID)
+            .collection("classroom")
+            .doc(subjectId)
+            .collection("Student")
+            .get()
+            .then((studentSnapshot) => {
+              studentSnapshot.forEach((studentDoc) => {
+                const studentData = studentDoc.data();
+                db.collection("users")
+                  .doc(currentUserUID)
+                  .collection("classroom")
+                  .doc(subjectId)
+                  .collection("checkin")
+                  .doc(checkinCode)
+                  .collection("scores")
+                  .doc(studentDoc.id)  // ใช้ ID เดียวกับนักเรียนใน "Student"
+                  .set({
+                    status: 0, // เริ่มต้นสถานะเป็น 0 (ยังไม่เช็คชื่อ)
+                    studentName: studentData.name || "ไม่ระบุ",
+                    sid: studentData.sid || "-",
+                    score: 0   // คะแนนเริ่มต้น 0
+                  })
+                  .catch((error) => {
+                    console.error("❌ Error adding student to scores:", error);
+                  });
+              });
+            })
+            .catch((error) => {
+              console.error("❌ Error fetching students:", error);
+            });
+        })
+        .catch((error) => {
+          console.error("❌ Error creating check-in:", error);
+        });
+    });
+
+    let unsubscribeCheckin = null;
+
+    // โหลดประวัติการเช็คชื่อ (สำหรับ modal แสดงรายละเอียด checkin)
+    function loadCheck() {
+      console.log("Loading check-in data...");
+      const CheckList = document.getElementById("checkin-list");
+      CheckList.innerHTML = "<li>กำลังโหลดข้อมูล...</li>";
+      if (!currentUserUID || !subjectId) {
+        console.error("❌ currentUserUID หรือ subjectId ไม่มีค่า");
+        return;
+      }
+      db.collection("users")
+        .doc(currentUserUID)
+        .collection("classroom")
+        .doc(subjectId)
+        .collection("checkin")
+        .orderBy("createdAt", "desc")
+        .onSnapshot((querySnapshot) => {
+          CheckList.innerHTML = "";
+          if (querySnapshot.empty) {
+            CheckList.innerHTML = "<li>ไม่มีรายการเช็คชื่อ</li>";
+            return;
+          }
+          const ol = document.createElement("ol");
+          querySnapshot.forEach((checkDoc) => {
+            const checkData = checkDoc.data();
+            console.log("📌 ข้อมูลเช็คชื่อที่โหลด:", checkData);
+            const li = document.createElement("li");
+            li.textContent = `${new Date(checkData.startTime).toLocaleString()} - ${checkData.checkinCode}`;
+            const detailDiv = document.createElement("div");
+            detailDiv.style.display = "none";
+            detailDiv.style.marginTop = "5px";
+            detailDiv.style.paddingLeft = "20px";
+            const table = document.createElement("table");
+            table.style.width = "100%";
+            table.style.borderCollapse = "collapse";
+            table.innerHTML = `
+              <thead>
+                <tr>
+                  <th style="border: 1px solid #ddd; padding: 8px;">ลำดับ</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">เลขประจำตัว</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">ชื่อ</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">สถานะ</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">วันที่</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">เวลา</th>
+                  <th style="border: 1px solid #ddd; padding: 8px;">หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody id="studentTableBody-${checkData.checkinCode}">
+                <tr>
+                  <td colspan="7" style="border: 1px solid #ddd; padding: 8px;">กดดูรายชื่อเพื่อโหลดข้อมูล</td>
+                </tr>
+              </tbody>
+            `;
+            detailDiv.appendChild(table);
+            li.addEventListener("click", () => {
+              if (detailDiv.style.display === "none") {
+                detailDiv.style.display = "block";
+                loadCheckinStudents(currentUserUID, subjectId, checkData.checkinCode);
+              } else {
+                detailDiv.style.display = "none";
+              }
+            });
+            li.appendChild(detailDiv);
+            ol.appendChild(li);
+          });
+          CheckList.appendChild(ol);
+        });
     }
 
-    function goBack(){
-      window.location.href = `index.html`;
+    // โหลดรายชื่อนักเรียนและสถานะจาก subcollection "Student" ใน check-in
+    // (ส่วนนี้ยังคงเดิมสำหรับรายละเอียดประวัติการเช็คชื่อ)
+    function loadCheckinStudents(currentUserUID, subjectId, checkinCode) {
+      if (!currentUserUID || !subjectId || !checkinCode) {
+        console.error("❌ ข้อมูลไม่ครบ: currentUserUID, subjectId หรือ checkinCode ไม่มีค่า");
+        return;
+      }
+      const tbody = document.getElementById(`studentTableBody-${checkinCode}`);
+      tbody.innerHTML = "<tr><td colspan='7'>กำลังโหลดข้อมูล...</td></tr>";
+      // 1) โหลดนักเรียนจาก collection "Student" (ในระบบของคุณ)
+      db.collection("Student")
+        .get()
+        .then((studentQuery) => {
+          const students = {};
+          studentQuery.forEach((doc) => {
+            let studentData = doc.data();
+            // สมมุติว่าเราตรวจสอบว่า นักเรียนลงทะเบียนวิชานี้แล้ว
+            // (ในที่นี้คุณอาจมีการตรวจสอบเพิ่มเติมตามโครงสร้าง DB ของคุณ)
+            students[doc.id] = {
+              sid: studentData.sid || "-",
+              name: studentData.name || "-",
+              status: "-",
+              date: "-",
+              time: "-",
+              remake: "-"
+            };
+          });
+          // 2) โหลดสถานะจาก subcollection "Student" ใน check-in (ถ้ามี)
+          db.collection("users")
+            .doc(currentUserUID)
+            .collection("classroom")
+            .doc(subjectId)
+            .collection("checkin")
+            .doc(checkinCode)
+            .collection("Student")
+            .get()
+            .then((checkinQuery) => {
+              checkinQuery.forEach((doc) => {
+                if (students[doc.id]) {
+                  students[doc.id].status = doc.data().status || "-";
+                  students[doc.id].date = doc.data().date || "-";
+                  students[doc.id].time = doc.data().time || "-";
+                  students[doc.id].remake = doc.data().remake || "-";
+                }
+              });
+              tbody.innerHTML = "";
+              let index = 1;
+              for (const studentId in students) {
+                const st = students[studentId];
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                  <td style="border: 1px solid #ddd; padding: 8px;">${index++}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${st.sid}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${st.name}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${st.status}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${st.date}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${st.time}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${st.remake}</td>
+                `;
+                tbody.appendChild(tr);
+              }
+            })
+            .catch((error) => {
+              console.error("❌ Error loading checkin status:", error);
+            });
+        })
+        .catch((error) => {
+          console.error("❌ Error loading students:", error);
+        });
     }
 
+    // โหลดนักเรียนและคะแนนจาก check-in ล่าสุด (สำหรับหน้า manageClass)
+    function loadStudentScores() {
+      const studentTableBody = document.getElementById("student-table-body");
+      studentTableBody.innerHTML = "<tr><td colspan='5'>กำลังโหลดข้อมูล...</td></tr>";
+      if (!currentUserUID || !subjectId) {
+        console.error("currentUserUID หรือ subjectId ไม่มีค่า");
+        return;
+      }
+      // 1. โหลดข้อมูลนักเรียนจาก collection "Student" ในเอกสารของวิชา
+      db.collection("users")
+        .doc(currentUserUID)
+        .collection("classroom")
+        .doc(subjectId)
+        .collection("Student")
+        .get()
+        .then((studentSnapshot) => {
+          const students = {};
+          studentSnapshot.forEach((doc) => {
+            students[doc.id] = {
+              sid: doc.data().sid || "-",
+              name: doc.data().name || "-",
+              img: doc.data().img || "",
+              score: 0
+            };
+          });
+          // 2. โหลดเอกสาร check-in ล่าสุด (order by createdAt desc, limit 1)
+          db.collection("users")
+            .doc(currentUserUID)
+            .collection("classroom")
+            .doc(subjectId)
+            .collection("checkin")
+            .orderBy("createdAt", "desc")
+            .limit(1)
+            .get()
+            .then((checkinSnapshot) => {
+              if (!checkinSnapshot.empty) {
+                const checkinDoc = checkinSnapshot.docs[0];
+                const checkinCode = checkinDoc.id;
+                // 3. โหลดคะแนนจาก subcollection "scores" ใน checkinDoc
+                db.collection("users")
+                  .doc(currentUserUID)
+                  .collection("classroom")
+                  .doc(subjectId)
+                  .collection("checkin")
+                  .doc(checkinCode)
+                  .collection("scores")
+                  .get()
+                  .then((scoresSnapshot) => {
+                    scoresSnapshot.forEach((scoreDoc) => {
+                      if (students[scoreDoc.id]) {
+                        students[scoreDoc.id].score = scoreDoc.data().score || 0;
+                      }
+                    });
+                    // 4. แสดงผลในตาราง (เพิ่มคอลัมน์ "คะแนน")
+                    studentTableBody.innerHTML = "";
+                    let index = 1;
+                    for (const studentId in students) {
+                      const st = students[studentId];
+                      const tr = document.createElement("tr");
+                      tr.innerHTML = `
+                        <td style="border: 1px solid #ddd; padding: 8px;">${index++}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${st.sid}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${st.name}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;"><img src="${st.img}" alt="${st.name}" width="50"></td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${st.score}</td>
+                      `;
+                      studentTableBody.appendChild(tr);
+                    }
+                  })
+                  .catch((error) => {
+                    console.error("❌ Error loading scores:", error);
+                  });
+              } else {
+                // หากไม่มี check-in ล่าสุด, แสดงคะแนนเป็น 0
+                studentTableBody.innerHTML = "";
+                let index = 1;
+                for (const studentId in students) {
+                  const st = students[studentId];
+                  const tr = document.createElement("tr");
+                  tr.innerHTML = `
+                    <td style="border: 1px solid #ddd; padding: 8px;">${index++}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${st.sid}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${st.name}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;"><img src="${st.img}" alt="${st.name}" width="50"></td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">0</td>
+                  `;
+                  studentTableBody.appendChild(tr);
+                }
+              }
+            })
+            .catch((error) => {
+              console.error("❌ Error loading latest checkin:", error);
+            });
+        })
+        .catch((error) => {
+          console.error("❌ Error loading students:", error);
+        });
+    }
+
+    // เรียก loadStudentScores เมื่อโหลดหน้าจัดการนักเรียน
+    function loadStudent() {
+      loadStudentScores();
+    }
   </script>
 </body>
 </html>
