@@ -121,6 +121,7 @@
     .student-table th {
       background-color: #007bff;
       color: #fff;
+      
     }
     /* ส่วนประวัติการเช็คชื่อ */
     .history {
@@ -254,13 +255,22 @@
   
   <!-- ส่วนเนื้อหา (tabcontent) ของหน้านี้ -->
   <div class="tabcontent">
-    <h2>จัดการนักเรียน</h2>
+    <!-- สร้างคอนเทนเนอร์ห่อ h2 และปุ่มไว้ด้วยกัน -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+      <h2 style="margin: 0;">จัดการนักเรียน</h2>
+      <button id="btn-add-student" onclick="openAddStudentModal()" 
+              style="padding:8px 12px; background-color:#3ccc14; border:none; color:#fff; border-radius:4px; cursor:pointer;">
+        เพิ่มนักเรียน
+      </button>
+    </div>
     <table class="student-table">
       <thead>
         <tr>
           <th>ลำดับ</th>
           <th>รหัส</th>
+          <th>อีเมล์</th>
           <th>ชื่อ</th>
+          <th>ถอดนักเรียน</th>
         </tr>
       </thead>
       <tbody id="student-table-body">
@@ -275,6 +285,19 @@
       <span class="close" onclick="closeQR()">×</span>
       <div id="qr-code">
         <!-- QR Code จะแสดงที่นี่ -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal สำหรับเพิ่มนักเรียน -->
+  <div id="add-student-modal" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5);">
+    <div class="modal-content" style="background: #fff; margin: 100px auto; padding: 20px; width: 400px; border-radius: 8px; position: relative;">
+      <span class="close" onclick="closeAddStudentModal()" style="position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 18px;">×</span>
+      <h3>เพิ่มนักเรียน</h3>
+      <div id="add-student-form">
+        <label for="student-email">Email ของนักเรียน:</label>
+        <input type="email" id="student-email" placeholder="กรอก email" style="width:100%; padding:6px; margin-bottom:10px;">
+        <button onclick="addStudent()" style="padding:8px 12px; background-color:#28a745; border:none; color:#fff; border-radius:4px; cursor:pointer;">เพิ่ม</button>
       </div>
     </div>
   </div>
@@ -417,7 +440,9 @@
                           tr.innerHTML = `
                               <td>${index++}</td>
                               <td>${studentData.sid || "ไม่มีรหัส"}</td>
+                              <td>${studentData.email || "ไม่มีอีเมล์"}</td>
                               <td>${studentData.name || "ไม่มีชื่อ"}</td>
+                              <td><button onclick="removeStudent('${studentDoc.id}')" style="padding:4px 8px; display: block; width: 100%; background-color:#dc3545; border:none; justify-self: center; color:#fff; border-radius:4px; cursor:pointer;">ลบ</button></td>
                           `;
                           studentTableBody.appendChild(tr);
                       }
@@ -433,7 +458,74 @@
           });
     }
 
-    
+    // ฟังก์ชันสำหรับเปิดและปิด modal เพิ่มนักเรียน
+    function openAddStudentModal() {
+      document.getElementById("add-student-modal").style.display = "block";
+    }
+    function closeAddStudentModal() {
+      document.getElementById("add-student-modal").style.display = "none";
+    }
+
+    // ฟังก์ชันสำหรับเพิ่มนักเรียนด้วย email
+    function addStudent() {
+      const email = document.getElementById("student-email").value.trim();
+      if (!email) {
+        alert("กรุณากรอก email ให้ถูกต้อง");
+        return;
+      }
+      
+      // ค้นหานักเรียนที่มี email ตรงกันในคอลเลคชัน "Student"
+      db.collection("Student").where("email", "==", email).get()
+        .then((querySnapshot) => {
+          if (querySnapshot.empty) {
+            alert("ไม่พบนักเรียนที่มี email นี้");
+            return;
+          }
+          
+          let addPromises = [];
+          querySnapshot.forEach((doc) => {
+            const studentId = doc.id;
+            // เพิ่มข้อมูลใน subcollection subjectList ของนักเรียน โดยใช้ subjectId
+            let promise = db.collection("Student").doc(studentId)
+                            .collection("subjectList").doc(subjectId)
+                            .set({ joined: true, addedAt: firebase.firestore.FieldValue.serverTimestamp() });
+            addPromises.push(promise);
+          });
+          
+          Promise.all(addPromises)
+            .then(() => {
+              alert("เพิ่มนักเรียนเข้าชั้นเรียนเรียบร้อยแล้ว");
+              closeAddStudentModal();
+              loadStudent(); // โหลดรายชื่อนักเรียนใหม่
+            })
+            .catch((error) => {
+              console.error("❌ เกิดข้อผิดพลาดในการเพิ่มนักเรียน:", error);
+              alert("เกิดข้อผิดพลาดในการเพิ่มนักเรียน");
+            });
+        })
+        .catch((error) => {
+          console.error("❌ เกิดข้อผิดพลาดในการค้นหานักเรียน:", error);
+          alert("เกิดข้อผิดพลาดในการค้นหานักเรียน");
+        });
+    }
+
+    // ฟังก์ชันสำหรับลบนักเรียนออกจากชั้นเรียน
+    function removeStudent(studentId) {
+      if (!confirm("คุณต้องการลบนักเรียนคนนี้ออกจากชั้นเรียนหรือไม่?")) {
+        return;
+      }
+      db.collection("Student").doc(studentId)
+        .collection("subjectList").doc(subjectId)
+        .delete()
+        .then(() => {
+          alert("ลบนักเรียนออกจากชั้นเรียนเรียบร้อยแล้ว");
+          loadStudent();
+        })
+        .catch((error) => {
+          console.error("❌ เกิดข้อผิดพลาดในการลบนักเรียน:", error);
+          alert("เกิดข้อผิดพลาดในการลบนักเรียน");
+        });
+    }
 
     function goBack(){
       window.location.href = `index.html`;

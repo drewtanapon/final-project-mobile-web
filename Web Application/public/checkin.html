@@ -295,9 +295,14 @@
 
   <!-- เนื้อหาแท็บนี้ -->
   <div class="container">
-    <button id="btn-checkin">เพิ่มการเช็คชื่อ</button>
     <div class="history">
-      <h3>ประวัติการเช็คชื่อ</h3>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <h2 style="margin: 0;">ประวัติการเช็คชื่อ</h2>
+        <button id="btn-checkin"
+          style="padding:8px 12px; background-color:#3ccc14; border:none; color:#fff; border-radius:4px; cursor:pointer;">
+          เพิ่มการเช็คชื่อ
+        </button>
+      </div>
       <ul id="checkin-history">
         <!-- รายการประวัติจะถูกเติมที่นี่ -->
         <li id="checkin-list"></li>
