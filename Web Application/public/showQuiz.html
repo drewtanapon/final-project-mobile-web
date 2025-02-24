@@ -31,21 +31,21 @@
         transition: background-image 0.5s ease-in-out;
       }
       table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-    }
-    th, td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-        th {
-            background: #007bff;
-            color: white;
-        }
-       /* ========== สไตล์แท็บ ========== */
-       .tab {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th, td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      th {
+        background: #007bff;
+        color: white;
+      }
+      /* ========== สไตล์แท็บ ========== */
+      .tab {
         display: flex;
         background-color: #ccc;
         border-radius: 8px 8px 0 0;
@@ -121,35 +121,18 @@
         box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
         color: #fff;
       }
-      /* ตารางแสดงนักเรียนที่ลงทะเบียน */
-      .student-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-      }
-      .student-table th, .student-table td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: left;
-      }
-      .student-table th {
+      /* ปุ่มสร้างคำถาม */
+      #btn-create {
+        margin-left: auto; 
         background-color: #007bff;
+        border: none;
         color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 8px 12px;
       }
-      /* ส่วนประวัติการเช็คชื่อ */
-      .history {
-        margin-top: 30px;
-      }
-      .history h3 {
-        margin-bottom: 10px;
-      }
-      .history ul {
-        list-style-type: none;
-        padding: 0;
-      }
-      .history li {
-        padding: 10px;
-        border-bottom: 1px solid #ddd;
+      #btn-create:hover {
+        background-color: #0056b3;
       }
       /* Modal สำหรับแสดง QR Code */
       #qr-modal {
@@ -177,72 +160,21 @@
         cursor: pointer;
         font-size: 18px;
       }
-      /* Modal สำหรับเพิ่มการเช็คชื่อ */
-      #checkin-modal {
-        display: none;
-        position: fixed;
-        top:0;
-        left:0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-      }
-      #checkin-modal .modal-content {
-        background: #fff;
-        margin: 100px auto;
-        padding: 20px;
-        width: 400px;
-        border-radius: 8px;
-        position: relative;
-      }
-      #checkin-modal .modal-content h3 {
-        margin-top: 0;
-      }
-      #checkin-modal .close {
-        position: absolute;
-        top: 10px;
-        right: 15px;
-        cursor: pointer;
-        font-size: 18px;
-      }
-      /* สไตล์ฟอร์มใน Modal */
-      #checkin-form-modal div {
-        margin-bottom: 10px;
-      }
-      #checkin-form-modal label {
-        display: block;
-        margin-bottom: 5px;
-      }
-      #checkin-form-modal input {
-        width: 100%;
-        padding: 6px;
-        box-sizing: border-box;
-      }
-      #checkin-form-modal button {
+      /* ปุ่มย้อนกลับ */
+      #btn-back {
+        margin-right: 10px;
         padding: 8px 12px;
-        background-color: #28a745;
+        background-color: #007bff;
         border: none;
         color: #fff;
         border-radius: 4px;
         cursor: pointer;
+        margin-left: auto;
       }
-      #checkin-form-modal button:hover {
-        background-color: #218838;
-      }
-      #btn-create{
-      margin-right: 10px;
-      padding: 8px 12px;
-      background-color: #007bff;
-      border: none;
-      color: #fff;
-      border-radius: 4px;
-      cursor: pointer;
-      
-    }
     </style>
 </head>
 <body>
-    <!-- ส่วนหัวแสดงข้อมูลวิชา -->
+  <!-- ส่วนหัวแสดงข้อมูลวิชา -->
   <div class="header" id="header">
     <div class="subject-info">
       <div class="subject-code">
@@ -256,8 +188,6 @@
       <button id="btn-qr">แสดง QR Code</button>
       <button id="btn-back" onclick="goBack()">กลับไปหน้าหลัก</button>
     </div>
-
-
   </div>
 
   <!-- Modal สำหรับแสดง QR Code -->
@@ -271,48 +201,52 @@
   </div>
 
   <!-- แถบแท็บ 3 ปุ่ม -->
-<div class="tab">
-  <!-- แท็บหน้า “จัดการนักเรียน” (หน้านี้) ให้เป็น active -->
-  <a href="#" onclick="toggleManage()">จัดการนักเรียน</a>
-  <a href="#" onclick="toggleCheck()">เช็คชื่อ</a>
-  <a href="#" class="active">คำถาม</a>
-</div>
-    <div class="container">
-        <h2>รายการคำถาม</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>หมายเลขคำถาม</th>
-                    <th>คำถาม</th>
-                    <th>แสดงคำถาม</th>
-                </tr>
-            </thead>
-            <tbody id="questionList">
-                <tr><td colspan="3">กำลังโหลดข้อมูล...</td></tr>
-            </tbody>
-        </table>
-        <button id="btn-create" onclick="toggleCreateQuiz()">สร้างคำถาม</button>
+  <div class="tab">
+    <a href="#" onclick="toggleManage()">จัดการนักเรียน</a>
+    <a href="#" onclick="toggleCheck()">เช็คชื่อ</a>
+    <a href="#" class="active">คำถาม</a>
+  </div>
 
+  <div class="container">
+    <!-- 🔥 จัดปุ่มสร้างคำถามให้อยู่ขวาสุด บนบรรทัดเดียวกับหัวข้อ -->
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <h2 style="margin: 0;">รายการคำถาม</h2>
+      <button id="btn-create" onclick="toggleCreateQuiz()">สร้างคำถาม</button>
     </div>
+    <table>
+      <thead>
+        <tr>
+          <th>หมายเลขคำถาม</th>
+          <th>คำถาม</th>
+          <th>แสดงคำถาม</th>
+        </tr>
+      </thead>
+      <tbody id="questionList">
+        <tr><td colspan="3">กำลังโหลดข้อมูล...</td></tr>
+      </tbody>
+    </table>
+  </div>
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const subjectId = urlParams.get('subjectId');
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
-            authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
-            projectId: "webmobileapplication-cdaaf",
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const subjectId = urlParams.get('subjectId');
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
+      authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
+      projectId: "webmobileapplication-cdaaf",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-        firebase.auth().onAuthStateChanged((user) => {
-          if (user) {
-            currentUserUID = user.uid;
+    // โหลดข้อมูลวิชา + รายการคำถาม
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        const userId = user.uid;
 
-            db.collection("users")
-          .doc(currentUserUID)
+        // ดึงข้อมูลวิชา
+        db.collection("users")
+          .doc(userId)
           .collection("classroom")
           .doc(subjectId)
           .onSnapshot((doc) => {
@@ -320,77 +254,69 @@
               const data = doc.data();
               document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
               document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
-              // ✅ อัปเดต background-image ของ header
+              // อัปเดต background-image ของ header
               if (data.photo) {
                 document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
               }
             }
-        });
-        // ✅ โหลดรายการเช็คชื่อ หลังจากที่ currentUserUID ได้ค่าแล้ว
-        loadStudent();
-      }else {
-        console.log("ผู้ใช้ยังไม่ได้ล็อกอิน");
+          });
+
+        // โหลดรายการคำถาม
+        db.collection("users")
+          .doc(userId)
+          .collection("classroom")
+          .doc(subjectId)
+          .collection("question")
+          .orderBy("question_no", "asc")
+          .get()
+          .then(snapshot => {
+            const questionList = document.getElementById("questionList");
+            questionList.innerHTML = "";
+
+            if (snapshot.empty) {
+              questionList.innerHTML = `<tr><td colspan="3">ไม่มีคำถาม</td></tr>`;
+              return;
+            }
+
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              const row = `
+                <tr>
+                  <td>${data.question_no}</td>
+                  <td>${data.question_text}</td>
+                  <td>${data.question_show ? '✅' : '❌'}</td>
+                </tr>
+              `;
+              questionList.innerHTML += row;
+            });
+          })
+          .catch(error => console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error));
+      } else {
+        alert("กรุณาเข้าสู่ระบบก่อน");
+        window.location.href = "login.html";
       }
     });
-        firebase.auth().onAuthStateChanged(user => {
-            if (user) {
-                const userId = user.uid;
-                db.collection("users")
-                    .doc(userId)
-                    .collection("classroom")
-                    .doc(subjectId)
-                    .collection("question")
-                    .orderBy("question_no", "asc") // ✅ เรียงตาม question_no
-                    .get()
-                    .then(snapshot => {
-                        const questionList = document.getElementById("questionList");
-                        questionList.innerHTML = "";
 
-                        if (snapshot.empty) {
-                            questionList.innerHTML = `<tr><td colspan="3">ไม่มีคำถาม</td></tr>`;
-                            return;
-                        }
+    // ฟังก์ชันไปหน้า createQuiz
+    function toggleCreateQuiz(){
+      window.location.href = `createQuiz.html?subjectId=${subjectId}`;
+    }
 
-                        snapshot.forEach(doc => {
-                            const data = doc.data();
-                            const row = `<tr>
-                                <td>${data.question_no}</td>
-                                <td>${data.question_text}</td>
-                                <td>${data.question_show ? '✅' : '❌'}</td>
-                            </tr>`;
-                            questionList.innerHTML += row;
-                        });
-                    })
-                    .catch(error => console.error("เกิดข้อผิดพลาดในการดึงข้อมูล: ", error));
-            } else {
-                alert("กรุณาเข้าสู่ระบบก่อน");
-                window.location.href = "login.html";
-            }
-        });
+    // ฟังก์ชันไปหน้าเช็คชื่อ
+    function toggleCheck(){
+      window.location.href = `checkin.html?subjectId=${subjectId}`;
+    }
 
-        function toggleCreateQuiz(){
-            window.location.href = `createQuiz.html?subjectId=${subjectId}`;
-        }
+    // ฟังก์ชันไปหน้าจัดการนักเรียน
+    function toggleManage() {
+      window.location.href = `manageClass.html?subjectId=${subjectId}`;
+    }
 
-        
-        function toggleCheck(){
-         window.location.href = `checkin.html?subjectId=${subjectId}`;
-        }
-
-        function toggleManage() {
-          window.location.href = `manageClass.html?subjectId=${subjectId}`;
-        }
-
-        
-
-        document.getElementById("btn-qr").addEventListener("click", function(){
-      // แสดง modal สำหรับ QR Code
+    // ปุ่มแสดง QR
+    document.getElementById("btn-qr").addEventListener("click", function(){
       document.getElementById("qr-modal").style.display = "block";
-      // ล้าง container ก่อนสร้างใหม่ (กรณีคลิกหลายครั้ง)
       document.getElementById("qr-code").innerHTML = "";
-      // สร้าง URL สำหรับการลงทะเบียนวิชาโดยใช้ subjectId
       const registrationUrl = `https://yourdomain.com/register?subjectId=${subjectId}`;
-      // สร้าง QR Code ด้วย registrationUrl
       new QRCode(document.getElementById("qr-code"), {
         text: registrationUrl,
         width: 128,
@@ -400,15 +326,15 @@
         correctLevel: QRCode.CorrectLevel.H
       });
     });
-
+    // ปิด QR Modal
     function closeQR() {
       document.getElementById("qr-modal").style.display = "none";
     }
 
+    // ปุ่มกลับหน้าหลัก
     function goBack(){
       window.location.href = `index.html`;
     }
-
-    </script>
+  </script>
 </body>
 </html>
