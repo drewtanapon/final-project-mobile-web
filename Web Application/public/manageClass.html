@@ -66,7 +66,7 @@
       padding: 20px;
       border-radius: 0 8px 8px 8px;
       box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
+      height: 100%;
     }
     .subject-info {
       display: flex;
@@ -275,6 +275,7 @@
           <th>รหัส</th>
           <th>อีเมล์</th>
           <th>ชื่อ</th>
+          <th>คะแนนรวม</th>
           <th>ถอดนักเรียน</th>
         </tr>
       </thead>
@@ -401,67 +402,102 @@
     // ✅ โหลดรายชื่อนักเรียน
     function loadStudent() {
       const studentTableBody = document.getElementById("student-table-body");
-      studentTableBody.innerHTML = "<tr><td colspan='4'>กำลังโหลดข้อมูล...</td></tr>";
 
-      if (!subjectId) {
-          console.error("❌ ไม่พบ subjectId");
-          return;
+      if (!studentTableBody) {
+        console.error("❌ ไม่พบ student-table-body ใน DOM");
+        return;
       }
 
-      // 📌 ดึงนักเรียนที่มี subjectId นี้ใน subcollection subjectList
-      db.collection("Student")
-          .get()
-          .then((querySnapshot) => {
-              studentTableBody.innerHTML = ""; // ล้างข้อมูลเก่า
-              let index = 1;
-              let hasStudent = false;
-              let studentPromises = [];
+      studentTableBody.innerHTML = "<tr><td colspan='6'>กำลังโหลดข้อมูล...</td></tr>";
 
-              querySnapshot.forEach((doc) => {
-                  let studentId = doc.id; // ID ของนักเรียน
-                  let studentRef = db.collection("Student").doc(studentId).collection("subjectList").doc(subjectId);
+      if (!subjectId) {
+        console.error("❌ ไม่พบ subjectId");
+        return;
+      }
 
-                  // ตรวจสอบว่านักเรียนมี subjectId นี้หรือไม่
-                  studentPromises.push(
-                      studentRef.get().then((subjectDoc) => {
-                          if (subjectDoc.exists) {
-                              return db.collection("Student").doc(studentId).get();
-                          }
-                          return null;
-                      })
-                  );
-              });
+      db.collection("Student").get().then((querySnapshot) => {
+        studentTableBody.innerHTML = ""; // ล้างข้อมูลเก่าก่อนโหลดใหม่
+        let index = 1;
+        let hasStudent = false;
+        let studentPromises = [];
 
-              // 📌 รอให้ Promise ทั้งหมดทำงานเสร็จ
-              Promise.all(studentPromises).then((students) => {
-                  students.forEach((studentDoc) => {
-                      if (studentDoc && studentDoc.exists) {
-                          let studentData = studentDoc.data();
-                          hasStudent = true;
+        querySnapshot.forEach((doc) => {
+          let studentId = doc.id;
+          let studentRef = db.collection("Student").doc(studentId).collection("subjectList").doc(subjectId);
 
-                          console.log("📌 นักเรียนที่พบ:", studentData);
+          studentPromises.push(
+            studentRef.get().then((subjectDoc) => {
+              if (subjectDoc.exists) {
+                return db.collection("Student").doc(studentId).get();
+              }
+              return null;
+            })
+          );
+        });
 
-                          const tr = document.createElement("tr");
-                          tr.innerHTML = `
-                              <td>${index++}</td>
-                              <td>${studentData.sid || "ไม่มีรหัส"}</td>
-                              <td>${studentData.email || "ไม่มีอีเมล์"}</td>
-                              <td>${studentData.name || "ไม่มีชื่อ"}</td>
-                              <td><button onclick="removeStudent('${studentDoc.id}')" style="padding:4px 8px; display: block; width: 100%; background-color:#dc3545; border:none; justify-self: center; color:#fff; border-radius:4px; cursor:pointer;">ลบ</button></td>
-                          `;
-                          studentTableBody.appendChild(tr);
-                      }
-                  });
+        Promise.all(studentPromises).then((students) => {
+          let studentScores = {}; // เก็บคะแนนรวมของนักเรียน
+          let studentIds = [];
 
-                  if (!hasStudent) {
-                      studentTableBody.innerHTML = "<tr><td colspan='4'>ไม่มีนักเรียนลงทะเบียน</td></tr>";
-                  }
-              });
-          })
-          .catch((error) => {
-              console.error("❌ เกิดข้อผิดพลาดในการโหลดนักเรียน:", error);
+          students.forEach((studentDoc) => {
+            if (studentDoc && studentDoc.exists) {
+              let studentData = studentDoc.data();
+              hasStudent = true;
+              studentIds.push(studentDoc.id);
+              studentScores[studentDoc.id] = {
+                sid: studentData.sid || "ไม่มีรหัส",
+                name: studentData.name || "ไม่มีชื่อ",
+                email: studentData.email || "ไม่มีอีเมล์",
+                totalScore: 0, // เริ่มต้นให้เป็น 0
+              };
+            }
           });
+
+          // ✅ โหลดคะแนนจาก Firestore
+          if (studentIds.length > 0) {
+            db.collection("users")
+              .doc(currentUserUID)
+              .collection("classroom")
+              .doc(subjectId)
+              .collection("Student")
+              .get()
+              .then((studentSnapshot) => {
+                studentSnapshot.forEach((doc) => {
+                  if (studentScores[doc.id]) {
+                    studentScores[doc.id].totalScore = doc.data().totalScore || 0; // ถ้าไม่มีให้เป็น 0
+                  }
+                });
+
+                // ✅ แสดงผลข้อมูลทั้งหมดในตาราง
+                studentTableBody.innerHTML = "";
+                let index = 1;
+
+                for (const studentId in studentScores) {
+                  const st = studentScores[studentId];
+                  const tr = document.createElement("tr");
+                  tr.innerHTML = `
+                    <td>${index++}</td>
+                    <td>${st.sid}</td>
+                    <td>${st.email}</td>
+                    <td>${st.name}</td>
+                    <td>${st.totalScore.toFixed(1)}</td>
+                    <td><button onclick="removeStudent('${studentId}')" style="padding:4px 8px; background-color:#dc3545; border:none; color:#fff; border-radius:4px; cursor:pointer;">ลบ</button></td>
+                  `;
+                  studentTableBody.appendChild(tr);
+                }
+              })
+              .catch((error) => {
+                console.error("❌ Error loading student scores:", error);
+              });
+          } else {
+            studentTableBody.innerHTML = "<tr><td colspan='6'>ไม่มีนักเรียนลงทะเบียน</td></tr>";
+          }
+        });
+      }).catch((error) => {
+        console.error("❌ เกิดข้อผิดพลาดในการโหลดนักเรียน:", error);
+      });
     }
+
 
     // ฟังก์ชันสำหรับเปิดและปิด modal เพิ่มนักเรียน
     function openAddStudentModal() {
@@ -473,68 +509,120 @@
 
     // ฟังก์ชันสำหรับเพิ่มนักเรียนด้วย email
     function addStudent() {
-      const email = document.getElementById("student-email").value.trim();
-      if (!email) {
-        alert("กรุณากรอก email ให้ถูกต้อง");
-        return;
-      }
-      
-      // ค้นหานักเรียนที่มี email ตรงกันในคอลเลคชัน "Student"
-      db.collection("Student").where("email", "==", email).get()
-        .then((querySnapshot) => {
-          if (querySnapshot.empty) {
-            alert("ไม่พบนักเรียนที่มี email นี้");
-            return;
-          }
-          
-          let addPromises = [];
-          querySnapshot.forEach((doc) => {
-            const studentId = doc.id;
-            // เพิ่มข้อมูลใน subcollection subjectList ของนักเรียน โดยใช้ subjectId
-            let promise = db.collection("Student").doc(studentId)
-                            .collection("subjectList").doc(subjectId)
-                            .set({ joined: true, addedAt: firebase.firestore.FieldValue.serverTimestamp() });
-            addPromises.push(promise);
-          });
-          
-          Promise.all(addPromises)
-            .then(() => {
-              alert("เพิ่มนักเรียนเข้าชั้นเรียนเรียบร้อยแล้ว");
-              closeAddStudentModal();
-              loadStudent(); // โหลดรายชื่อนักเรียนใหม่
-            })
-            .catch((error) => {
-              console.error("❌ เกิดข้อผิดพลาดในการเพิ่มนักเรียน:", error);
-              alert("เกิดข้อผิดพลาดในการเพิ่มนักเรียน");
-            });
-        })
-        .catch((error) => {
-          console.error("❌ เกิดข้อผิดพลาดในการค้นหานักเรียน:", error);
-          alert("เกิดข้อผิดพลาดในการค้นหานักเรียน");
-        });
+    const email = document.getElementById("student-email").value.trim();
+    if (!email) {
+      alert("กรุณากรอก email ให้ถูกต้อง");
+      return;
     }
+    
+    db.collection("Student").where("email", "==", email).get()
+      .then((querySnapshot) => {
+        if (querySnapshot.empty) {
+          alert("ไม่พบนักเรียนที่มี email นี้");
+          return;
+        }
+
+        let addPromises = [];
+        querySnapshot.forEach((doc) => {
+          const studentId = doc.id;
+          const studentData = doc.data();
+
+          // 1) บันทึกลง subcollection "Student" ของวิชานี้
+          const studentRef = db.collection("users")
+                              .doc(currentUserUID)
+                              .collection("classroom")
+                              .doc(subjectId)
+                              .collection("Student")
+                              .doc(studentId);
+          let promise = studentRef.set({
+            sid: studentData.sid || "-",
+            name: studentData.name || "-",
+            email: studentData.email || "",
+            img: studentData.img || "",  // เผื่อมีรูปเก็บไว้
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          // 2) ถ้าคุณต้องการเก็บสถานะใน global "Student" -> "subjectList"
+          //   เพื่อให้นักเรียนรู้ว่าเรียนวิชาอะไรอยู่ ก็อัปเดตตรงนั้นด้วย
+          //   (แล้วแต่โครงสร้าง DB ของคุณ)
+          let promise2 = db.collection("Student")
+                          .doc(studentId)
+                          .collection("subjectList")
+                          .doc(subjectId)
+                          .set({
+                            joined: true,
+                            addedAt: firebase.firestore.FieldValue.serverTimestamp()
+                          });
+          
+          addPromises.push(promise, promise2);
+        });
+        
+        return Promise.all(addPromises);
+      })
+      .then(() => {
+        alert("เพิ่มนักเรียนเข้าชั้นเรียนเรียบร้อยแล้ว");
+        closeAddStudentModal();
+        loadStudent(); // โหลดรายชื่อนักเรียนใหม่ (หน้า manageClass)
+      })
+      .catch((error) => {
+        console.error("❌ เกิดข้อผิดพลาดในการเพิ่มนักเรียน:", error);
+        alert("เกิดข้อผิดพลาดในการเพิ่มนักเรียน");
+      });
+  }
+
 
     // ฟังก์ชันสำหรับลบนักเรียนออกจากชั้นเรียน
     function removeStudent(studentId) {
-      if (!confirm("คุณต้องการลบนักเรียนคนนี้ออกจากชั้นเรียนหรือไม่?")) {
-        return;
-      }
-      db.collection("Student").doc(studentId)
-        .collection("subjectList").doc(subjectId)
-        .delete()
-        .then(() => {
-          alert("ลบนักเรียนออกจากชั้นเรียนเรียบร้อยแล้ว");
-          loadStudent();
-        })
-        .catch((error) => {
-          console.error("❌ เกิดข้อผิดพลาดในการลบนักเรียน:", error);
-          alert("เกิดข้อผิดพลาดในการลบนักเรียน");
+    if (!confirm("คุณต้องการลบนักเรียนคนนี้ออกจากชั้นเรียนหรือไม่?")) {
+      return;
+    }
+
+    // 1) ลบใน subcollection "Student" ของวิชา
+    db.collection("users")
+      .doc(currentUserUID)
+      .collection("classroom")
+      .doc(subjectId)
+      .collection("Student")
+      .doc(studentId)
+      .delete()
+      .then(() => {
+        // 2) ลบใน checkin/scores ทุกตัว (หากต้องการลบออกจากประวัติเช็คชื่อเก่าด้วย)
+        const checkinRef = db.collection("users")
+                            .doc(currentUserUID)
+                            .collection("classroom")
+                            .doc(subjectId)
+                            .collection("checkin");
+
+        return checkinRef.get();
+      })
+      .then((checkinSnapshot) => {
+        const batch = db.batch(); // ใช้ batch เพื่อประมวลผลรวดเดียว
+        checkinSnapshot.forEach((checkinDoc) => {
+          const scoreRef = checkinDoc.ref.collection("scores").doc(studentId);
+          batch.delete(scoreRef);
         });
+        return batch.commit();
+      })
+      .then(() => {
+        // 3) ลบใน global "Student" -> "subjectList" (แล้วแต่โครงสร้าง DB ของคุณ)
+        return db.collection("Student")
+                .doc(studentId)
+                .collection("subjectList")
+                .doc(subjectId)
+                .delete();
+      })
+      .then(() => {
+        alert("ลบนักเรียนออกจากชั้นเรียน (และทุกรายการเช็คชื่อ) เรียบร้อยแล้ว");
+        // โหลดรายชื่อนักเรียนใหม่ (หน้า manageClass)
+        loadStudent();
+      })
+      .catch((error) => {
+        console.error("❌ เกิดข้อผิดพลาดในการลบนักเรียน:", error);
+        alert("เกิดข้อผิดพลาดในการลบนักเรียน");
+      });
     }
-
-    function goBack(){
-      window.location.href = `index.html`;
+    function goBack() {
+      window.location.href = "index.html";
     }
-
   </script>
 </body>
