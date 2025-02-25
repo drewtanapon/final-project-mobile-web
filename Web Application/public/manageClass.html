@@ -498,6 +498,101 @@
       });
     }
 
+    function loadStudentScores() {
+    const studentTableBody = document.getElementById("student-table-body");
+    studentTableBody.innerHTML = "<tr><td colspan='5'>กำลังโหลดข้อมูล...</td></tr>";
+    
+    if (!currentUserUID || !subjectId) {
+      console.error("currentUserUID หรือ subjectId ไม่มีค่า");
+      return;
+    }
+    
+    // 1. ดึงข้อมูลนักเรียนที่ลงทะเบียนในวิชานี้จาก global collection "Student"
+    // โดยใช้ collectionGroup query กับ subcollection "subjectList" ที่มี document ID เท่ากับ subjectId
+    db.collectionGroup("subjectList")
+      .where(firebase.firestore.FieldPath.documentId(), "==", subjectId)
+      .get()
+      .then((subjectListSnapshot) => {
+        const students = {};
+        subjectListSnapshot.forEach((doc) => {
+          // studentId คือ parent's parent's id ของเอกสาร subjectList
+          const studentId = doc.ref.parent.parent.id;
+          const data = doc.data();
+          students[studentId] = {
+            sid: data.sid || "-",
+            name: data.name || "-",
+            img: data.img || "",
+            score: 0
+          };
+        });
+        
+        // 2. ดึงเอกสาร check-in ล่าสุดจาก classroom (เรียง createdAt แบบ descending, limit 1)
+        db.collection("users")
+          .doc(currentUserUID)
+          .collection("classroom")
+          .doc(subjectId)
+          .collection("checkin")
+          .orderBy("createdAt", "desc")
+          .limit(1)
+          .get()
+          .then((checkinSnapshot) => {
+            if (!checkinSnapshot.empty) {
+              const checkinDoc = checkinSnapshot.docs[0];
+              // 3. ดึงคะแนนจาก subcollection "scores" ในเอกสาร check-in ล่าสุด
+              db.collection("users")
+                .doc(currentUserUID)
+                .collection("classroom")
+                .doc(subjectId)
+                .collection("checkin")
+                .doc(checkinDoc.id)
+                .collection("scores")
+                .get()
+                .then((scoresSnapshot) => {
+                  scoresSnapshot.forEach((scoreDoc) => {
+                    if (students[scoreDoc.id]) {
+                      students[scoreDoc.id].score = scoreDoc.data().score || 0;
+                    }
+                  });
+                  renderStudentTable(students);
+                })
+                .catch((error) => {
+                  console.error("❌ Error loading scores:", error);
+                });
+            } else {
+              // ถ้าไม่มี check-in ล่าสุด ให้แสดงนักเรียนพร้อมคะแนนเป็น 0
+              renderStudentTable(students);
+            }
+          })
+          .catch((error) => {
+            console.error("❌ Error loading latest checkin:", error);
+          });
+      })
+      .catch((error) => {
+        console.error("❌ Error loading subjectList registrations:", error);
+      });
+  }
+
+
+    function renderStudentTable(students) {
+      const studentTableBody = document.getElementById("student-table-body");
+      studentTableBody.innerHTML = "";
+      let index = 1;
+      for (const studentId in students) {
+        const st = students[studentId];
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="border: 1px solid #ffffff; padding: 8px;">${index++}</td>
+          <td style="border: 1px solid #ffffff; padding: 8px;">${st.sid}</td>
+          <td style="border: 1px solid #ffffff; padding: 8px;">${st.name}</td>
+          <td style="border: 1px solid #ffffff; padding: 8px;"><img src="${st.img}" alt="${st.name}" width="50"></td>
+          <td style="border: 1px solid #ffffff; padding: 8px;">${st.score}</td>
+        `;
+        studentTableBody.appendChild(tr);
+      }
+    }
+
+  
+
 
     // ฟังก์ชันสำหรับเปิดและปิด modal เพิ่มนักเรียน
     function openAddStudentModal() {
