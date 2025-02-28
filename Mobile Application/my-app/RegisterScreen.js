@@ -1,40 +1,64 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { auth } from "./firebaseConfig";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth, db, createUserWithEmailAndPassword, doc, setDoc } from "./firebaseConfig";
 
 const RegisterScreen = ({ navigation }) => {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
+  //ฟังก์ชันสมัครสมาชิก
   const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
-      Alert.alert("Error", "กรุณากรอกข้อมูลให้ครบถ้วน");
+    if (!username || !email || !password || !phoneNumber) {
+      Alert.alert("ข้อผิดพลาด", "กรุณากรอกข้อมูลให้ครบถ้วน");
       return;
     }
-
-    if (password !== confirmPassword) {
-      Alert.alert("Error", "รหัสผ่านไม่ตรงกัน");
+    if (password.length < 6) {
+      Alert.alert("ข้อผิดพลาด", "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร");
       return;
     }
 
     setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      Alert.alert("Success", "สมัครสมาชิกสำเร็จ! โปรดเข้าสู่ระบบ");
-      navigation.navigate("Login"); // ไปหน้า Login
-    } catch (error) {
-      Alert.alert("สมัครไม่สำเร็จ", error.message);
-    }
-    setLoading(false);
+        // ✅ สร้างบัญชีผู้ใช้ Firebase Authentication
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user; // ✅ ดึง user จาก Firebase Authentication
+        const sid = user.uid; // ✅ ใช้ uid เป็นรหัสนักศึกษา (sid)
+      
+        // ✅ บันทึกข้อมูลลง Firestore ใน Collection `Student`
+        await setDoc(doc(db, "Student", sid), {
+          username,
+          email,
+          phoneNumber,
+          createdAt: new Date(),
+        });
+      
+        Alert.alert("✅ สมัครสมาชิกสำเร็จ!", "กำลังพาไปหน้า Login...");
+        setTimeout(() => navigation.navigate("Login"), 1500);
+      } catch (error) {
+        Alert.alert("❌ สมัครไม่สำเร็จ", error.message);
+      }
+      setLoading(false);
+      
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>สมัครสมาชิก</Text>
+
+      {/* Username Input */}
+      <View style={styles.inputContainer}>
+        <MaterialIcons name="person" size={24} color="gray" />
+        <TextInput
+          style={styles.input}
+          placeholder="Username"
+          value={username}
+          onChangeText={setUsername}
+        />
+      </View>
 
       {/* Email Input */}
       <View style={styles.inputContainer}>
@@ -60,15 +84,15 @@ const RegisterScreen = ({ navigation }) => {
         />
       </View>
 
-      {/* Confirm Password Input */}
+      {/* Phone Number Input */}
       <View style={styles.inputContainer}>
-        <MaterialIcons name="lock" size={24} color="gray" />
+        <MaterialIcons name="phone" size={24} color="gray" />
         <TextInput
           style={styles.input}
-          placeholder="Confirm Password"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
+          placeholder="Phone Number"
+          keyboardType="phone-pad"
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
         />
       </View>
 
@@ -85,7 +109,7 @@ const RegisterScreen = ({ navigation }) => {
   );
 };
 
-// Styles
+//สไตล์ของหน้า Register
 const styles = {
   container: {
     flex: 1,
@@ -97,7 +121,7 @@ const styles = {
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   inputContainer: {
     flexDirection: "row",
@@ -107,7 +131,7 @@ const styles = {
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 12,
-    marginBottom: 15,
+    marginBottom: 10,
     elevation: 3,
   },
   input: {
@@ -116,18 +140,16 @@ const styles = {
     fontSize: 16,
   },
   registerButton: {
-    backgroundColor: "#007bff",
+    backgroundColor: "#008000",
     width: "100%",
     paddingVertical: 12,
     alignItems: "center",
     borderRadius: 8,
     marginTop: 10,
-    elevation: 3,
   },
   buttonText: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "bold",
   },
   loginButton: {
     marginTop: 15,

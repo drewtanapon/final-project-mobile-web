@@ -1,7 +1,9 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-// Your Firebase Config (Replace with your Firebase project credentials)
+//แทนที่ค่าด้านล่างด้วย Firebase Config ของคุณ
 const firebaseConfig = {
     apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
     authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
@@ -11,8 +13,11 @@ const firebaseConfig = {
     appId: "1:90430005457:web:47c8bdebb51fe92435e5f0",
     measurementId: "G-J886NPRZWK"
 };
-// Initialize Firebase
+
+// ✅ เริ่มต้น Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-export { auth };
+export { auth, db,createUserWithEmailAndPassword, doc, setDoc, ref};
+
