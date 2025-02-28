@@ -23,7 +23,7 @@ export default function App() {
           <FaceView />
         </Card>
         <Text style={[styles.paragraph, { fontSize: 17 }]}>
-          653380200-4 นายธนพนธ์ ผาศิริ
+          test
         </Text>
       </View>
     </ImageBackground>
