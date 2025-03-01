@@ -95,9 +95,7 @@
 
         async function getMaxQuestionNo(userId, subjectId) {
             try {
-                const querySnapshot = await db.collection("users")
-                    .doc(userId)
-                    .collection("classroom")
+                const querySnapshot = await db.collection("classroom")
                     .doc(subjectId)
                     .collection("question")
                     .orderBy("question_no", "desc")
@@ -138,9 +136,7 @@
                 try {
                     const nextQuestionNo = await getMaxQuestionNo(userId, subjectId);
 
-                    await db.collection("users")
-                        .doc(userId)
-                        .collection("classroom")
+                    await db.collection("classroom")
                         .doc(subjectId)
                         .collection("question")
                         .add({

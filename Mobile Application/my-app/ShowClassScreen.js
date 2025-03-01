@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from "react-native";
-import { auth } from "./firebaseConfig"; // ใช้ auth ตามปกติ
-import { getFirestore, collection, doc, getDocs, updateDoc } from "firebase/firestore"; // นำเข้า Firestore ตามแบบโมดูล
+import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator, StyleSheet, Image } from "react-native";
+import { auth, db, collection, doc, getDocs} from "./firebaseConfig"; // ✅ นำเข้า getDocs
+
+
 
 const ShowClassScreen = ({ navigation }) => {
   const [classes, setClasses] = useState([]);
@@ -17,10 +18,10 @@ const ShowClassScreen = ({ navigation }) => {
           return;
         }
 
-        const db = getFirestore(); // เรียกใช้งาน Firestore
+        // ✅ อ้างอิงไปที่ Collection `subjectList` ที่อยู่ภายใต้ Student/{userId}
         const studentRef = doc(db, "Student", user.uid);
-        const subjectListRef = collection(studentRef, "subjectList");
-        const querySnapshot = await getDocs(subjectListRef);
+        const subjectListRef = collection(studentRef, "subjectList"); // ✅ ใช้ collection() แทน doc()
+        const querySnapshot = await getDocs(subjectListRef); // ✅ ใช้ getDocs() อ่าน Collection
 
         if (!querySnapshot.empty) {
           const subjects = querySnapshot.docs.map(doc => ({
@@ -40,28 +41,6 @@ const ShowClassScreen = ({ navigation }) => {
     fetchClasses();
   }, []);
 
-  // ฟังก์ชันสำหรับเช็คชื่อเข้าเรียน
-  const markAttendance = async (classId) => {
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        Alert.alert("⚠️ กรุณาเข้าสู่ระบบ");
-        return;
-      }
-
-      const db = getFirestore();
-      const subjectRef = doc(db, "Student", user.uid, "subjectList", classId);
-
-      // อัปเดตสถานะการเข้าเรียน (attendance) ในฐานข้อมูล
-      await updateDoc(subjectRef, {
-        attendance: true, // สมมติว่าเราจะอัปเดตให้สถานะเป็น 'เข้าเรียน' (true)
-      });
-
-      Alert.alert("✅ เช็คชื่อสำเร็จ", "คุณได้เช็คชื่อเข้าเรียนแล้ว");
-    } catch (error) {
-      Alert.alert("❌ ข้อผิดพลาด", error.message);
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -73,18 +52,20 @@ const ShowClassScreen = ({ navigation }) => {
         <FlatList
           data={classes}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.classListContainer}
           renderItem={({ item }) => (
             <View style={styles.classItem}>
-              <Text style={styles.classText}>📖 </Text>
-              
+              <Image source={{ uri: item.photo }} style={styles.classImage} />
+              <Text style={styles.classText}>📖 {item.name} ({item.code})</Text>
+              <Text style={styles.roomText}>📍 ห้อง: {item.room || "ไม่ระบุ"}</Text>
+
               {/* ปุ่มเช็คชื่อเข้าเรียน */}
               <TouchableOpacity
                 style={styles.attendanceButton}
-                onPress={() => markAttendance(item.id)}
+        
               >
                 <Text style={styles.buttonText}>✔️ เช็คชื่อเข้าเรียน</Text>
               </TouchableOpacity>
+
             </View>
           )}
         />
@@ -161,9 +142,9 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: "center",
     borderRadius: 12,
-    position: 'absolute', // ตั้งให้ปุ่มอยู่ข้างล่างเสมอ
-    bottom: 20, // ระยะห่างจากขอบล่าง
-    elevation: 5, // สำหรับ Android
+    position: 'absolute',
+    bottom: 20,
+    elevation: 5,
   },
   buttonText: {
     color: "#fff",
