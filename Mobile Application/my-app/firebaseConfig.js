@@ -1,7 +1,12 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from "firebase/auth";
+import { getFirestore, doc, setDoc ,getDoc } from "firebase/firestore";
+import { ref } from "firebase/storage";
 
 //แทนที่ค่าด้านล่างด้วย Firebase Config ของคุณ
 const firebaseConfig = {
@@ -19,5 +24,5 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-export { auth, db,createUserWithEmailAndPassword, doc, setDoc, ref};
+export { auth, db,createUserWithEmailAndPassword, doc, setDoc, ref, signOut, onAuthStateChanged, getDoc };
 
