@@ -1,15 +1,16 @@
 import React, { useState, useRef } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { auth, db } from "./firebaseConfig";
 import { signInWithPhoneNumber, PhoneAuthProvider, linkWithCredential } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-
+import { MaterialIcons } from "@expo/vector-icons";
 
 const LinkPhoneScreen = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationId, setVerificationId] = useState(null);
   const [otpCode, setOtpCode] = useState("");
+  const [loading, setLoading] = useState(false);
   const recaptchaVerifier = useRef(null);
 
   const checkUserPhoneNumberMatches = async (enteredPhone) => {
@@ -19,11 +20,7 @@ const LinkPhoneScreen = ({ navigation }) => {
     try {
       const userDocRef = doc(db, "Student", user.uid);
       const userDocSnap = await getDoc(userDocRef);
-      if (userDocSnap.exists()) {
-        return userDocSnap.data().phoneNumber === enteredPhone;
-      } else {
-        return false;
-      }
+      return userDocSnap.exists() && userDocSnap.data().phoneNumber === enteredPhone;
     } catch (error) {
       console.error("Error checking user phone number:", error);
       return false;
@@ -36,9 +33,11 @@ const LinkPhoneScreen = ({ navigation }) => {
       return;
     }
 
+    setLoading(true);
     const isMatch = await checkUserPhoneNumberMatches(phoneNumber);
     if (!isMatch) {
       Alert.alert("❌ เบอร์ไม่ตรงกับข้อมูลในระบบ");
+      setLoading(false);
       return;
     }
 
@@ -50,6 +49,7 @@ const LinkPhoneScreen = ({ navigation }) => {
       console.error("OTP Error:", error);
       Alert.alert("❌ ส่ง OTP ไม่สำเร็จ", error.message);
     }
+    setLoading(false);
   };
 
   const verifyAndLink = async () => {
@@ -58,6 +58,7 @@ const LinkPhoneScreen = ({ navigation }) => {
       return;
     }
 
+    setLoading(true);
     try {
       const credential = PhoneAuthProvider.credential(verificationId, otpCode);
       const user = auth.currentUser;
@@ -68,38 +69,117 @@ const LinkPhoneScreen = ({ navigation }) => {
     } catch (error) {
       Alert.alert("❌ ผูกเบอร์โทรไม่สำเร็จ", error.message);
     }
+    setLoading(false);
   };
 
   return (
-    <View style={{ padding: 20 }}>
-      <FirebaseRecaptchaVerifierModal ref={recaptchaVerifier} firebaseConfig={{ 
-        apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
-        authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
-        projectId: "webmobileapplication-cdaaf",
-        storageBucket: "webmobileapplication-cdaaf.appspot.com",
-        messagingSenderId: "90430005457",
-        appId: "1:90430005457:web:47c8bdebb51fe92435e5f0",
-        measurementId: "G-J886NPRZWK"
-       }} />
+    <View style={styles.container}>
+      <FirebaseRecaptchaVerifierModal 
+        ref={recaptchaVerifier}
+        firebaseConfig={{
+          apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
+          authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
+          projectId: "webmobileapplication-cdaaf",
+          storageBucket: "webmobileapplication-cdaaf.appspot.com",
+          messagingSenderId: "90430005457",
+          appId: "1:90430005457:web:47c8bdebb51fe92435e5f0",
+          measurementId: "G-J886NPRZWK"
+        }}
+      />
 
-      <Text>กรอกเบอร์โทร (+66...)</Text>
-      <TextInput value={phoneNumber} onChangeText={setPhoneNumber} />
+      <Text style={styles.title}>🔗 ผูกเบอร์โทรศัพท์</Text>
 
-      <TouchableOpacity onPress={sendOTP}>
-        <Text>ขอ OTP</Text>
+      <View style={styles.inputContainer}>
+        <MaterialIcons name="phone" size={24} color="gray" />
+        <TextInput
+          style={styles.input}
+          placeholder="Phone Number (+66...)"
+          keyboardType="phone-pad"
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
+        />
+      </View>
+
+      <TouchableOpacity style={styles.button} onPress={sendOTP} disabled={loading}>
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>📩 ขอ OTP</Text>}
       </TouchableOpacity>
 
       {verificationId && (
         <>
-          <Text>กรอก OTP</Text>
-          <TextInput value={otpCode} onChangeText={setOtpCode} />
-          <TouchableOpacity onPress={verifyAndLink}>
-            <Text>ยืนยัน OTP และ Link</Text>
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="vpn-key" size={24} color="gray" />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter OTP"
+              keyboardType="number-pad"
+              value={otpCode}
+              onChangeText={setOtpCode}
+            />
+          </View>
+
+          <TouchableOpacity style={styles.buttonVerify} onPress={verifyAndLink} disabled={loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>✅ ยืนยัน OTP และ Link</Text>}
           </TouchableOpacity>
         </>
       )}
     </View>
   );
+};
+
+// ✅ ปรับปรุง UI/UX ด้วยสไตล์ที่ดีกว่า
+const styles = {
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f4f4f4",
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    color: "#333",
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    width: "100%",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    marginBottom: 15,
+    elevation: 3,
+  },
+  input: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 16,
+  },
+  button: {
+    backgroundColor: "#007bff",
+    width: "100%",
+    paddingVertical: 12,
+    alignItems: "center",
+    borderRadius: 8,
+    marginTop: 10,
+    elevation: 3,
+  },
+  buttonVerify: {
+    backgroundColor: "#28a745",
+    width: "100%",
+    paddingVertical: 12,
+    alignItems: "center",
+    borderRadius: 8,
+    marginTop: 10,
+    elevation: 3,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
 };
 
 export default LinkPhoneScreen;
