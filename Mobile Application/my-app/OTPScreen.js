@@ -1,7 +1,7 @@
 // OTPScreen.js
 import React, { useState, useRef } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
-import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { MaterialIcons } from "@expo/vector-icons";
 import { 
   auth,

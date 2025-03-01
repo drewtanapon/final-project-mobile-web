@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
-import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { auth, db } from "./firebaseConfig";
 import { signInWithPhoneNumber, PhoneAuthProvider, linkWithCredential } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
