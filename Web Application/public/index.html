@@ -258,32 +258,89 @@
             });
         }
 
-        // ✅ โหลดรายชื่อวิชาของผู้ใช้
+        // โหลดรายชื่อวิชาของผู้ใช้ตามโครงสร้างใหม่
         function loadSubjects(userId) {
             const subjectList = document.getElementById("subject-list1");
             subjectList.innerHTML = "<li>กำลังโหลดข้อมูล...</li>";
 
+            // ดึงรายการห้องเรียนที่ผู้ใช้เป็นสมาชิกจาก users/{uid}/classroom
             db.collection("users").doc(userId).collection("classroom")
-                .orderBy("createdAt", "desc")
-                .onSnapshot((querySnapshot) => {
+                .orderBy("joined_at", "desc")
+                .onSnapshot((userClassesSnapshot) => {
                     subjectList.innerHTML = ""; // ล้างข้อมูลเก่า
-                    if (querySnapshot.empty) {
+                    
+                    if (userClassesSnapshot.empty) {
                         subjectList.innerHTML = "<li>ไม่มีรายวิชา</li>";
                         return;
                     }
-                    querySnapshot.forEach((doc) => {
-                        const subjectData = doc.data();
-                        const li = document.createElement("li");
-                        li.innerHTML = `
-                            <span>${subjectData.code} - ${subjectData.name}</span>
-                            <button onclick="manageClass('${doc.id}')">
-                                <img src="ใบไม้.gif" alt="icon"
-                                    style="width: 30px; height: 30px; margin-right: 10px; vertical-align: middle;">
-                                จัดการห้องเรียน
-                            </button>
-                        `;
-                        subjectList.appendChild(li);
+
+                    // สร้าง array เก็บ Promise ของการดึงข้อมูลห้องเรียนแต่ละห้อง
+                    const classPromises = [];
+                    const classData = {};
+                    
+                    // ดึงข้อมูลแต่ละห้องเรียน
+                    userClassesSnapshot.forEach((userClassDoc) => {
+                        const classId = userClassDoc.id;
+                        const userClassData = userClassDoc.data();
+                        const userRole = userClassData.status; // 1=อาจารย์, 2=นักเรียน
+                        
+                        classData[classId] = { role: userRole };
+                        
+                        // สร้าง Promise สำหรับดึงข้อมูลห้องเรียนแต่ละห้อง
+                        const classPromise = db.collection("classroom").doc(classId).get()
+                            .then((classDoc) => {
+                                if (classDoc.exists) {
+                                    classData[classId].info = classDoc.data().info || {};
+                                    return { id: classId, exists: true };
+                                } else {
+                                    console.warn(`ไม่พบข้อมูลห้องเรียน ${classId}`);
+                                    return { id: classId, exists: false };
+                                }
+                            });
+                        
+                        classPromises.push(classPromise);
                     });
+                    
+                    // รอให้ดึงข้อมูลห้องเรียนทั้งหมดเสร็จ
+                    Promise.all(classPromises).then((results) => {
+                        if (results.every(result => !result.exists)) {
+                            subjectList.innerHTML = "<li>ไม่พบข้อมูลรายวิชา</li>";
+                            return;
+                        }
+                        
+                        // แสดงรายการห้องเรียน
+                        results.forEach((result) => {
+                            if (!result.exists) return;
+                            
+                            const classId = result.id;
+                            const info = classData[classId].info;
+                            const userRole = classData[classId].role;
+                            
+                            const li = document.createElement("li");
+                            const buttonText = userRole === 1 ? 'จัดการห้องเรียน' : 'เข้าห้องเรียน';
+                            
+                            li.innerHTML = `
+                                <span>${info.code || ''} - ${info.name || 'ไม่ระบุชื่อวิชา'}</span>
+                                <button onclick="manageClass('${classId}', ${userRole})">
+                                    <img src="ใบไม้.gif" alt="icon"
+                                        style="width: 30px; height: 30px; margin-right: 10px; vertical-align: middle;">
+                                    ${buttonText}
+                                </button>
+                            `;
+                            subjectList.appendChild(li);
+                        });
+                        
+                        // กรณีที่ดึงข้อมูลครบแล้วแต่ไม่มีข้อมูลวิชาที่ถูกต้อง
+                        if (subjectList.innerHTML === "") {
+                            subjectList.innerHTML = "<li>ไม่พบข้อมูลรายวิชา</li>";
+                        }
+                    }).catch((error) => {
+                        console.error("เกิดข้อผิดพลาดในการโหลดข้อมูลรายวิชา:", error);
+                        subjectList.innerHTML = "<li>เกิดข้อผิดพลาดในการโหลดข้อมูล</li>";
+                    });
+                }, (error) => {
+                    console.error("เกิดข้อผิดพลาดในการดึงรายการห้องเรียน:", error);
+                    subjectList.innerHTML = "<li>เกิดข้อผิดพลาดในการโหลดข้อมูล</li>";
                 });
         }
 

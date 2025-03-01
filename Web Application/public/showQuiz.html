@@ -262,9 +262,7 @@
           });
 
         // โหลดรายการคำถาม
-        db.collection("users")
-          .doc(userId)
-          .collection("classroom")
+        db.collection("classroom")
           .doc(subjectId)
           .collection("question")
           .orderBy("question_no", "asc")
