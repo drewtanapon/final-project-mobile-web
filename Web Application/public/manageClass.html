@@ -442,6 +442,8 @@
           students.forEach((studentDoc) => {
             if (studentDoc && studentDoc.exists) {
               let studentData = studentDoc.data();
+              const totalScore = studentData.totalScore || 0;
+
               hasStudent = true;
               studentIds.push(studentDoc.id);
               studentScores[studentDoc.id] = {
@@ -480,7 +482,7 @@
                     <td>${st.sid}</td>
                     <td>${st.email}</td>
                     <td>${st.name}</td>
-                    <td>${st.totalScore.toFixed(1)}</td>
+                    <td>${st.totalScore}</td>
                     <td><button onclick="removeStudent('${studentId}')" style="padding:4px 8px; background-color:#dc3545; border:none; color:#fff; border-radius:4px; cursor:pointer;">ลบ</button></td>
                   `;
                   studentTableBody.appendChild(tr);

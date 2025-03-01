@@ -19,6 +19,8 @@ import {
   where,
   getDocs
 } from "firebase/firestore";
+import { getFirestore, doc, setDoc ,getDoc ,getDocs} from "firebase/firestore";
+import { ref } from "firebase/storage";
 
 // แทนที่ค่าด้านล่างด้วย Firebase Config ของคุณ
 const firebaseConfig = {

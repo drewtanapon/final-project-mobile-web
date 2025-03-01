@@ -294,12 +294,6 @@
     // ดึง subjectId จาก query string หรือ sessionStorage
     let urlParams = new URLSearchParams(window.location.search);
     let subjectId = urlParams.get('subjectId') || sessionStorage.getItem('subjectId');
-    if (!subjectId) {
-      console.error("❌ ไม่พบ subjectId");
-    } else {
-      console.log("✅ subjectId:", subjectId);
-      sessionStorage.setItem('subjectId', subjectId);
-    }
 
     let currentUserUID = "";
     // ตัวแปรเก็บ checkinCode ปัจจุบัน
@@ -578,93 +572,93 @@
 
     // โหลดรายชื่อนักเรียนและสถานะจาก subcollection "Student" ใน check-in
     // (ส่วนนี้ยังคงเดิมสำหรับรายละเอียดประวัติการเช็คชื่อ)
-    function loadCheckinStudents(currentUserUID, subjectId, checkinCode, checkinCloseTime) {
-      if (!currentUserUID || !subjectId || !checkinCode) {
-        console.error("❌ ข้อมูลไม่ครบ: currentUserUID, subjectId หรือ checkinCode ไม่มีค่า");
-        return;
-      }
-      const tbody = document.getElementById(`studentTableBody-${checkinCode}`);
-      tbody.innerHTML = "<tr><td colspan='7'>กำลังโหลดข้อมูล...</td></tr>";
-      // 1) โหลดนักเรียนจาก collection "Student" (ในระบบของคุณ)
-      db.collection("users")
-        .doc(currentUserUID)
-        .collection("classroom")
-        .doc(subjectId)
-        .collection("Student")
-        .get()
-        .then((studentQuery) => {
-          const students = {};
-          studentQuery.forEach((doc) => {
-            let studentData = doc.data();
-            // สมมุติว่าเราตรวจสอบว่า นักเรียนลงทะเบียนวิชานี้แล้ว
-            // (ในที่นี้คุณอาจมีการตรวจสอบเพิ่มเติมตามโครงสร้าง DB ของคุณ)
-            students[doc.id] = {
-              sid: studentData.sid || "-",
-              name: studentData.name || "-",
-              status: "-",
-              date: "-",
-              time: "-",
-              remake: "-"
-            };
-          });
-          // 2) โหลดสถานะจาก subcollection "Student" ใน check-in (ถ้ามี)
-          db.collection("users")
-            .doc(currentUserUID)
-            .collection("classroom")
-            .doc(subjectId)
-            .collection("checkin")
-            .doc(checkinCode)
-            .collection("scores")
-            .get()
-            .then((checkinQuery) => {
-              checkinQuery.forEach((doc) => {
-                if (students[doc.id]) {
-                  students[doc.id].status = doc.data().status || 0;
-                  students[doc.id].date = doc.data().date || "-";
-                  students[doc.id].time = doc.data().time || "-";
-                  students[doc.id].remake = doc.data().remake || "-";
-                }
-              });
-              tbody.innerHTML = "";
-              let index = 1;
-              for (const studentId in students) {
-                const st = students[studentId];
-                let displayStatus = st.status;
-                if (st.status === 0) {
-                  if (Date.now() < checkinCloseTime) {
-                    displayStatus = "ยังไม่เช็คชื่อ";  // กรณียังเปิดเช็คชื่อ
-                  } else {
-                    displayStatus = "ขาดเรียน"; // ปิดเช็คชื่อแล้ว
-                  }
-                } else if (st.status === 1) {
-                  displayStatus = "มาเรียน";
-                } else if (st.status === 2) {
-                  displayStatus = "สาย";
-                } else if (st.status === 3) {
-                  displayStatus = "ขาดเรียน"; // กรณีที่ระบบบันทึกให้
-                }
-                isplayStatus = "สาย";
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                  <td style="border: 1px solid #ddd; padding: 8px;">${index++}</td>
-                  <td style="border: 1px solid #ddd; padding: 8px;">${st.sid}</td>
-                  <td style="border: 1px solid #ddd; padding: 8px;">${st.name}</td>
-                  <td style="border: 1px solid #ddd; padding: 8px;">${displayStatus}</td>
-                  <td style="border: 1px solid #ddd; padding: 8px;">${st.date}</td>
-                  <td style="border: 1px solid #ddd; padding: 8px;">${st.time}</td>
-                  <td style="border: 1px solid #ddd; padding: 8px;">${st.remake}</td>
-                `;
-                tbody.appendChild(tr);
-              }
-            })
-            .catch((error) => {
-              console.error("❌ Error loading checkin status:", error);
+      function loadCheckinStudents(currentUserUID, subjectId, checkinCode, checkinCloseTime) {
+        if (!currentUserUID || !subjectId || !checkinCode) {
+          console.error("❌ ข้อมูลไม่ครบ: currentUserUID, subjectId หรือ checkinCode ไม่มีค่า");
+          return;
+        }
+        const tbody = document.getElementById(`studentTableBody-${checkinCode}`);
+        tbody.innerHTML = "<tr><td colspan='7'>กำลังโหลดข้อมูล...</td></tr>";
+        // 1) โหลดนักเรียนจาก collection "Student" (ในระบบของคุณ)
+        db.collection("users")
+          .doc(currentUserUID)
+          .collection("classroom")
+          .doc(subjectId)
+          .collection("Student")
+          .get()
+          .then((studentQuery) => {
+            const students = {};
+            studentQuery.forEach((doc) => {
+              let studentData = doc.data();
+              // สมมุติว่าเราตรวจสอบว่า นักเรียนลงทะเบียนวิชานี้แล้ว
+              // (ในที่นี้คุณอาจมีการตรวจสอบเพิ่มเติมตามโครงสร้าง DB ของคุณ)
+              students[doc.id] = {
+                sid: studentData.sid || "-",
+                name: studentData.name || "-",
+                status: "-",
+                date: "-",
+                time: "-",
+                remake: "-",
+              };
             });
-        })
-        .catch((error) => {
-          console.error("❌ Error loading students:", error);
-        });
-    }
+            // 2) โหลดสถานะจาก subcollection "Student" ใน check-in (ถ้ามี)
+            db.collection("users")
+              .doc(currentUserUID)
+              .collection("classroom")
+              .doc(subjectId)
+              .collection("checkin")
+              .doc(checkinCode)
+              .collection("scores")
+              .get()
+              .then((checkinQuery) => {
+                checkinQuery.forEach((doc) => {
+                  if (students[doc.id]) {
+                    students[doc.id].status = doc.data().status || 0;
+                    students[doc.id].date = doc.data().date || "-";
+                    students[doc.id].time = doc.data().time || "-";
+                    students[doc.id].remake = doc.data().remake || "-";
+                  }
+                });
+                tbody.innerHTML = "";
+                let index = 1;
+                for (const studentId in students) {
+                  const st = students[studentId];
+                  let displayStatus = st.status;
+                  if (st.status === 0) {
+                    if (Date.now() < checkinCloseTime) {
+                      displayStatus = "ยังไม่เช็คชื่อ";  // กรณียังเปิดเช็คชื่อ
+                    } else {
+                      displayStatus = "ขาดเรียน"; // ปิดเช็คชื่อแล้ว
+                    }
+                  } else if (st.status === 1) {
+                    displayStatus = "มาเรียน";
+                  } else if (st.status === 2) {
+                    displayStatus = "สาย";
+                  } else if (st.status === 3) {
+                    displayStatus = "ขาดเรียน"; // กรณีที่ระบบบันทึกให้
+                  }
+                  isplayStatus = "สาย";
+                  const tr = document.createElement("tr");
+                  tr.innerHTML = `
+                    <td style="border: 1px solid #ddd; padding: 8px;">${index++}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${st.sid}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${st.name}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${displayStatus}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${st.date}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${st.time}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${st.remake}</td>
+                  `;
+                  tbody.appendChild(tr);
+                }
+              })
+              .catch((error) => {
+                console.error("❌ Error loading checkin status:", error);
+              });
+          })
+          .catch((error) => {
+            console.error("❌ Error loading students:", error);
+          });
+      }
 
     // กำหนดตัวแปร global สำหรับ timer
     let checkinTimer = null;
@@ -729,9 +723,6 @@
                     });
                 }, 30 * 60 * 1000);
                 updateToggleButtonText("open");
-              })
-              .catch((error) => {
-                console.error("❌ Error opening check-in:", error);
               });
           }
         }
@@ -760,8 +751,6 @@
 
         // ✅ อัปเดตคะแนนรวมหลังจากปิดเช็คชื่อ
         updateStudentScores();
-      }).catch((error) => {
-        console.error("❌ Error marking absentees:", error);
       });
     }
 
@@ -783,6 +772,7 @@
           }
 
           const checkinDocs = checkinSnapshot.docs.map(doc => doc.id);
+          console.log("📌 รายการเช็คชื่อที่พบ:", checkinDocs); // ✅ เช็คว่ามี check-in ใดบ้า
           const scorePromises = checkinDocs.map(checkinId =>
             db.collection("users")
               .doc(currentUserUID)
@@ -829,7 +819,7 @@
               .collection("Student")
               .doc(studentId);
 
-            batch.update(studentRef, { totalScore: score });
+            batch.update(studentRef, { totalScore: score }, { merge: true });
           });
 
           return batch.commit();
