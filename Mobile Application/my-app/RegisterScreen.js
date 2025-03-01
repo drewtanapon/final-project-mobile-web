@@ -8,6 +8,7 @@ const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [studentId, setStudentId] = useState("");
   const [loading, setLoading] = useState(false);
 
   //ฟังก์ชันสมัครสมาชิก
@@ -33,6 +34,7 @@ const RegisterScreen = ({ navigation }) => {
           username,
           email,
           phoneNumber,
+          studentId,
           createdAt: new Date(),
         });
       
@@ -93,6 +95,16 @@ const RegisterScreen = ({ navigation }) => {
           keyboardType="phone-pad"
           value={phoneNumber}
           onChangeText={setPhoneNumber}
+        />
+      </View>
+      {/* StudentID Input */}
+      <View style={styles.inputContainer}>
+        <MaterialIcons name="book" size={24} color="gray" />
+        <TextInput
+          style={styles.input}
+          placeholder="Student ID"
+          value={studentId}
+          onChangeText={setStudentId}
         />
       </View>
 
