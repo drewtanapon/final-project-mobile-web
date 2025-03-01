@@ -40,6 +40,9 @@ const HomeScreen = ({ navigation }) => {
     setLoading(false);
   };
 
+
+
+
   // ✅ ฟังก์ชัน Logout
   const handleLogout = async () => {
     try {
@@ -130,6 +133,10 @@ const HomeScreen = ({ navigation }) => {
               <Ionicons name="qr-code-outline" size={24} color="#fff" style={styles.buttonIcon} />
               <Text style={styles.buttonText}>สแกน QR Code เข้าร่วมชั้นเรียน</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity size={24} style={styles.showClassButton} onPress={() => navigation.navigate("ShowClass")} >
+            <Text style={styles.buttonText}>แสดงรายวิชาที่เรียน</Text>
+          </TouchableOpacity>
 
             <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
               <Ionicons name="log-out-outline" size={24} color="#fff" style={styles.buttonIcon} />
@@ -286,7 +293,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  
+  showClassButton: {
+    backgroundColor: "#007bff",
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    marginBottom: 12,
+  },  
   // Full Screen Scanner Styles
   fullScreenScanner: {
     position: "absolute",
