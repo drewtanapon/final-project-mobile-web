@@ -34,6 +34,9 @@ const HomeScreen = ({ navigation }) => {
     setLoading(false);
   };
 
+
+
+
   // ✅ ฟังก์ชัน Logout
   const handleLogout = async () => {
     try {
@@ -57,9 +60,15 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.info}>📧 อีเมล: {userData.email}</Text>
           <Text style={styles.info}>📞 เบอร์โทร: {userData.phoneNumber}</Text>
 
+          <TouchableOpacity style={styles.showClassButton} onPress={() => navigation.navigate("ShowClass")} >
+            <Text style={styles.buttonText}>แสดงรายวิชาที่เรียน</Text>
+          </TouchableOpacity>
+
+
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.buttonText}>ออกจากระบบ</Text>
           </TouchableOpacity>
+
         </>
       ) : (
         <Text style={styles.errorText}>❌ ไม่สามารถโหลดข้อมูลผู้ใช้ได้</Text>
@@ -101,6 +110,14 @@ const styles = {
   buttonText: {
     color: "#fff",
     fontSize: 18,
+  },
+  showClassButton: {
+    backgroundColor: "#007bff",
+    width: "80%",
+    paddingVertical: 12,
+    alignItems: "center",
+    borderRadius: 8,
+    marginTop: 20,
   },
 };
 
