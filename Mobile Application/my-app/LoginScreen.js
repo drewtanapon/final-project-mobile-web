@@ -17,9 +17,10 @@ const LoginScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      Alert.alert("Success", "Logged in successfully!");
-      navigation.replace("Home"); 
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log("Logged in UID:", userCredential.user.uid);
+      Alert.alert("Success", `Logged in successfully!`);
+      navigation.replace("LinkEmailAndPhone"); 
     } catch (error) {
       Alert.alert("Login Failed", error.message);
     }
