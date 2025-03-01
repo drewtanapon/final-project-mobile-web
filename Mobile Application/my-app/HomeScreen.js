@@ -57,6 +57,8 @@ const HomeScreen = ({ navigation }) => {
       const uid = auth.currentUser?.uid;
       if (!uid) return;
 
+      const subjectId = data;
+
       const classDocRef = doc(db, "Classes", data);
       const classDocSnap = await getDoc(classDocRef);
 

@@ -312,17 +312,15 @@
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         currentUserUID = user.uid;
-        db.collection("users")
-          .doc(currentUserUID)
-          .collection("classroom")
+        db.collection("classroom")
           .doc(subjectId)
           .onSnapshot((doc) => {
             if (doc.exists) {
               const data = doc.data();
-              document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
-              document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
+              document.getElementById("display-subjectCode").innerText = data.info.code || "ไม่ระบุ";
+              document.getElementById("display-subjectName").innerText = data.info.name || "ไม่ระบุ";
               if (data.photo) {
-                document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
+                document.getElementById("header").style.backgroundImage = `url('${data.info.photo}')`;
               }
             }
           });
@@ -380,9 +378,7 @@
         return;
       }
 
-      const checkinRef = db.collection("users")
-        .doc(currentUserUID)
-        .collection("classroom")
+      const checkinRef = db.collection("classroom")
         .doc(subjectId)
         .collection("checkin")
         .doc(currentCheckinCode);
@@ -409,9 +405,7 @@
       const closeTime = now + 2 * 60 * 1000; // +30 นาที
       // สร้างเอกสาร checkin ใหม่ใน path:
       // /users/{currentUserUID}/classroom/{subjectId}/checkin/{checkinCode}
-      db.collection("users")
-        .doc(currentUserUID)
-        .collection("classroom")
+      db.collection("classroom")
         .doc(subjectId)
         .collection("checkin")
         .doc(checkinCode)
@@ -428,18 +422,14 @@
 
           // คัดลอกรายชื่อนักเรียนจาก collection "Student" ของวิชา
           // ไปยัง subcollection "scores" ของเอกสาร checkin ที่สร้างขึ้น
-          db.collection("users")
-            .doc(currentUserUID)
-            .collection("classroom")
+          db.collection("classroom")
             .doc(subjectId)
             .collection("Student")
             .get()
             .then((studentSnapshot) => {
               studentSnapshot.forEach((studentDoc) => {
                 const studentData = studentDoc.data();
-                db.collection("users")
-                  .doc(currentUserUID)
-                  .collection("classroom")
+                db.collection("classroom")
                   .doc(subjectId)
                   .collection("checkin")
                   .doc(checkinCode)
@@ -478,9 +468,7 @@
         return;
       }
       
-      db.collection("users")
-        .doc(currentUserUID)
-        .collection("classroom")
+      db.collection("classroom")
         .doc(subjectId)
         .collection("checkin")
         .orderBy("createdAt", "desc")
@@ -580,9 +568,7 @@
         const tbody = document.getElementById(`studentTableBody-${checkinCode}`);
         tbody.innerHTML = "<tr><td colspan='7'>กำลังโหลดข้อมูล...</td></tr>";
         // 1) โหลดนักเรียนจาก collection "Student" (ในระบบของคุณ)
-        db.collection("users")
-          .doc(currentUserUID)
-          .collection("classroom")
+        db.collection("classroom")
           .doc(subjectId)
           .collection("Student")
           .get()
@@ -602,9 +588,7 @@
               };
             });
             // 2) โหลดสถานะจาก subcollection "Student" ใน check-in (ถ้ามี)
-            db.collection("users")
-              .doc(currentUserUID)
-              .collection("classroom")
+            db.collection("classroom")
               .doc(subjectId)
               .collection("checkin")
               .doc(checkinCode)
@@ -669,9 +653,7 @@
         alert("ยังไม่มีการสร้างการเช็คชื่อ");
         return;
       }
-      const checkinDocRef = db.collection("users")
-            .doc(currentUserUID)
-            .collection("classroom")
+      const checkinDocRef = db.collection("classroom")
             .doc(subjectId)
             .collection("checkin")
             .doc(currentCheckinCode);
@@ -702,9 +684,7 @@
                 // เริ่ม timer 30 นาที (30*60*1000 ms)
                 checkinTimer = setTimeout(() => {
                   // เมื่อครบ 30 นาที ให้อัปเดตสถานะของนักเรียนที่ยังไม่ได้เช็ค (status = 0) ให้เป็น 2 (สาย)
-                  db.collection("users")
-                    .doc(currentUserUID)
-                    .collection("classroom")
+                  db.collection("classroom")
                     .doc(subjectId)
                     .collection("checkin")
                     .doc(currentCheckinCode)
@@ -729,9 +709,7 @@
       });
     }
     function markAbsentees() {
-      const checkinRef = db.collection("users")
-        .doc(currentUserUID)
-        .collection("classroom")
+      const checkinRef = db.collection("classroom")
         .doc(subjectId)
         .collection("checkin")
         .doc(currentCheckinCode)
@@ -759,9 +737,7 @@
 
       const studentScores = {}; // เก็บคะแนนรวมของแต่ละนักเรียน
 
-      db.collection("users")
-        .doc(currentUserUID)
-        .collection("classroom")
+      db.collection("classroom")
         .doc(subjectId)
         .collection("checkin")
         .get()
@@ -774,9 +750,7 @@
           const checkinDocs = checkinSnapshot.docs.map(doc => doc.id);
           console.log("📌 รายการเช็คชื่อที่พบ:", checkinDocs); // ✅ เช็คว่ามี check-in ใดบ้า
           const scorePromises = checkinDocs.map(checkinId =>
-            db.collection("users")
-              .doc(currentUserUID)
-              .collection("classroom")
+            db.collection("classroom")
               .doc(subjectId)
               .collection("checkin")
               .doc(checkinId)
@@ -812,9 +786,7 @@
 
           const batch = db.batch();
           Object.entries(studentScores).forEach(([studentId, score]) => {
-            const studentRef = db.collection("users")
-              .doc(currentUserUID)
-              .collection("classroom")
+            const studentRef = db.collection("classroom")
               .doc(subjectId)
               .collection("Student")
               .doc(studentId);
