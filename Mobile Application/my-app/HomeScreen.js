@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, Alert, ActivityIndicator, StyleSheet, SafeAreaView, StatusBar, Dimensions } from "react-native";
-import { auth, db, signOut, onAuthStateChanged, doc, getDoc, updateDoc, arrayUnion } from "./firebaseConfig";
+import { View, Text, TouchableOpacity, Button, Alert, ActivityIndicator, StyleSheet, SafeAreaView, StatusBar, Dimensions, ScrollView, TextInput } from "react-native";
+import { auth, db, signOut, onAuthStateChanged, doc, getDoc, collection, setDoc, } from "./firebaseConfig";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Ionicons } from '@expo/vector-icons';
 
@@ -11,13 +11,16 @@ const HomeScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
-  const [isScanning, setIsScanning] = useState(false); // 👈 เพิ่ม state
+  const [isScanning, setIsScanning] = useState(false);
+  const [joinedClass, setJoinedClass] = useState(null);     
 
   // ✅ ตรวจสอบว่าผู้ใช้เข้าสู่ระบบอยู่หรือไม่
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         await fetchUserData(user.uid);
+        await fetchRegisteredClasses(user.uid);
+        await fetchClassNames();
       } else {
         navigation.replace("Login"); // ถ้าไม่ได้เข้าสู่ระบบให้ไปที่หน้า Login
       }
@@ -25,10 +28,54 @@ const HomeScreen = ({ navigation }) => {
     return unsubscribe;
   }, []);
 
+  // ฟังก์ชันสำหรับลงทะเบียนด้วยรหัสห้อง (ใช้ได้ทั้งกรอกด้วยมือและสแกน QR Code)
+  const registerRoomCode = async (code) => {
+    if (!code.trim()) {
+      Alert.alert("ข้อผิดพลาด", "กรุณากรอกรหัสห้อง");
+      return;
+    }
+  
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+  
+      // ค้นหา classroom ที่มีรหัสตรงกับ roomCode
+      const q = query(collectionGroup(db, "classroom"), where("roomCode", "==", code));
+      const classSnap = await getDocs(q);
+  
+      if (classSnap.empty) {
+        Alert.alert("ข้อผิดพลาด", "ไม่พบบทเรียนที่ตรงกับรหัสนี้");
+        return;
+      }
+  
+      // ลงทะเบียนผู้ใช้ในห้องแรกที่พบ
+      const classDoc = classSnap.docs[0];
+      const classRef = classDoc.ref;
+      const studentRef = doc(classRef, "students", user.uid);
+  
+      await setDoc(studentRef, { status: 1, timestamp: new Date() });
+  
+      Alert.alert("สำเร็จ", "ลงทะเบียนเข้าห้องเรียนเรียบร้อยแล้ว!");
+      await fetchRegisteredClasses(user.uid); // อัปเดต UI
+    } catch (error) {
+      console.error("Error registering room:", error);
+      Alert.alert("ข้อผิดพลาด", "เกิดข้อผิดพลาดขณะลงทะเบียน");
+    }
+  };  
+
+  // ฟังก์ชันสำหรับลงทะเบียนด้วยรหัสห้องจาก TextInput
+  const handleRegisterWithCode = async () => {
+    await registerRoomCode(roomCode);
+    setRoomCode("");
+  };
+
   // ✅ ฟังก์ชันดึงข้อมูลผู้ใช้จาก Firestore
   const fetchUserData = async (uid) => {
     try {
       const userDoc = await getDoc(doc(db, "Student", uid)); // ดึงข้อมูลจาก Collection `Student`
+      if (!userDoc.exists()) {
+        userDoc = await getDoc(doc(db, "users", uid));
+      }
       if (userDoc.exists()) {
         setUserData(userDoc.data());
       } else {
@@ -40,9 +87,6 @@ const HomeScreen = ({ navigation }) => {
     setLoading(false);
   };
 
-
-
-
   // ✅ ฟังก์ชัน Logout
   const handleLogout = async () => {
     try {
@@ -53,33 +97,65 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  // ✅ ฟังก์ชันสแกน QR Code
   const handleBarCodeScanned = async ({ data }) => {
     setScanned(true);
     setIsScanning(false);
+
     try {
-      const uid = auth.currentUser?.uid;
-      if (!uid) return;
+        const user = auth.currentUser;
+        if (!user) {
+            Alert.alert("❌ ข้อผิดพลาด", "กรุณาเข้าสู่ระบบก่อน");
+            return;
+        }
 
-      const subjectId = data;
+        // ดึงค่า subjectId จาก URL ของ QR Code
+        const urlParams = new URL(data).searchParams;
+        const subjectId = urlParams.get("subjectId");
 
-      const classDocRef = doc(db, "Classes", data);
-      const classDocSnap = await getDoc(classDocRef);
+        if (!subjectId) {
+            Alert.alert("❌ ข้อผิดพลาด", "QR Code ไม่มีข้อมูลวิชา");
+            return;
+        }
 
-      if (!classDocSnap.exists()) {
-        Alert.alert("❌ ไม่พบชั้นเรียน", "QR Code ไม่ถูกต้อง");
-        return;
-      }
+        // ดึงข้อมูลของนักเรียนจาก Firestore
+        const studentRef = doc(db, "Student", user.uid);
+        const studentDoc = await getDoc(studentRef);
 
-      await updateDoc(doc(db, "Student", uid), {
-        enrolledClasses: arrayUnion(data),
-      });
+        if (!studentDoc.exists()) {
+            Alert.alert("❌ ข้อผิดพลาด", "ไม่พบนักเรียนในระบบ");
+            return;
+        }
 
-      Alert.alert("✅ เข้าร่วมชั้นเรียนสำเร็จ", `คุณได้เข้าร่วมชั้นเรียน ${classDocSnap.data().name}`);
+        const studentData = studentDoc.data();
+
+        // เพิ่มนักเรียนเข้าสู่วิชาใน Firestore (classroom/{subjectId}/Student/{studentId})
+        const classStudentRef = doc(db, "classroom", subjectId, "Student", user.uid);
+        await setDoc(classStudentRef, {
+            studentId: studentData.studentId || "-",
+            username: studentData.username || "ไม่ระบุชื่อ",
+            email: studentData.email || "-",
+            phoneNumber: studentData.phoneNumber || "-",
+            joinedAt: new Date()
+        });
+
+        // ✅ บันทึกว่าผู้ใช้เข้าร่วมวิชาในคอลเลกชัน `Student/{studentId}/subjectList/{subjectId}`
+        const studentSubjectRef = doc(db, "Student", user.uid, "subjectList", subjectId);
+        await setDoc(studentSubjectRef, {
+            code: subjectId, 
+            joinedAt: new Date()
+        });
+
+        // ✅ อัปเดต UI แสดงว่านักเรียนเข้าร่วมแล้ว
+        setJoinedClass(subjectId);
+        Alert.alert("✅ ลงทะเบียนสำเร็จ", `คุณได้เข้าร่วมวิชา ${subjectId}`);
+
     } catch (error) {
-      Alert.alert("❌ ข้อผิดพลาด", error.message);
+        console.error("Error registering student:", error);
+        Alert.alert("❌ ข้อผิดพลาด", "เกิดข้อผิดพลาดขณะลงทะเบียน");
     }
   };
-
+  
   // ฟังก์ชันเริ่มการสแกน
   const startScanning = async () => {
     // ตรวจสอบว่ามีสิทธิ์กล้องหรือไม่
@@ -125,6 +201,13 @@ const HomeScreen = ({ navigation }) => {
             </View>
           </View>
 
+          {/* ✅ แสดงข้อความเมื่อนักเรียนเข้าร่วมชั้นเรียนสำเร็จ */}
+          {joinedClass && (
+            <View style={styles.successBox}>
+              <Text style={styles.successText}>✅ เข้าร่วมชั้นเรียน {joinedClass} สำเร็จแล้ว!</Text>
+            </View>
+          )}
+
           <View style={styles.actionContainer}>
             <TouchableOpacity 
               style={styles.scanButton} 
@@ -165,7 +248,7 @@ const HomeScreen = ({ navigation }) => {
                   <Text style={styles.scannerTitle}>สแกน QR Code</Text>
                   <TouchableOpacity 
                     style={styles.closeButton} 
-                    onPress={stopScanning}
+                    onPress={() => setScanning(false)}
                   >
                     <Ionicons name="close" size={28} color="#fff" />
                   </TouchableOpacity>
@@ -176,7 +259,7 @@ const HomeScreen = ({ navigation }) => {
               <SafeAreaView style={styles.bottomControls}>
                 <TouchableOpacity 
                   style={styles.cancelButton} 
-                  onPress={stopScanning}
+                  onPress={() => setScanning(false)}
                 >
                   <Text style={styles.cancelButtonText}>ยกเลิก</Text>
                 </TouchableOpacity>
@@ -411,6 +494,20 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
     fontSize: 16,
+  },
+  successBox: {
+    backgroundColor: "#d4edda",
+    padding: 10,
+    margin: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#c3e6cb",
+    alignItems: "center",
+  },
+  successText: {
+    color: "#155724",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 
