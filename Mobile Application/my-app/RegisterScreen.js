@@ -11,40 +11,51 @@ const RegisterScreen = ({ navigation }) => {
   const [studentId, setStudentId] = useState("");
   const [loading, setLoading] = useState(false);
 
-  //ฟังก์ชันสมัครสมาชิก
+  // ✅ ฟังก์ชันตรวจสอบรูปแบบเบอร์โทรศัพท์
+  const validatePhoneNumber = (phone) => {
+    const phoneRegex = /^\+\d{7,15}$/; // ✅ ต้องขึ้นต้นด้วย "+" และตามด้วยตัวเลข 7-15 หลัก
+    return phoneRegex.test(phone);
+  };
+
+  // ✅ ฟังก์ชันสมัครสมาชิก
   const handleRegister = async () => {
-    if (!username || !email || !password || !phoneNumber) {
-      Alert.alert("ข้อผิดพลาด", "กรุณากรอกข้อมูลให้ครบถ้วน");
+    if (!username || !email || !password || !phoneNumber || !studentId) {
+      Alert.alert("❌ ข้อผิดพลาด", "กรุณากรอกข้อมูลให้ครบถ้วน");
       return;
     }
+
     if (password.length < 6) {
-      Alert.alert("ข้อผิดพลาด", "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร");
+      Alert.alert("❌ ข้อผิดพลาด", "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร");
+      return;
+    }
+
+    if (!validatePhoneNumber(phoneNumber)) {
+      Alert.alert("❌ ข้อผิดพลาด", "กรุณาใส่เบอร์โทรในรูปแบบสากล เช่น +66XXXXXXXXX หรือ +XX...");
       return;
     }
 
     setLoading(true);
     try {
-        // ✅ สร้างบัญชีผู้ใช้ Firebase Authentication
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user; // ✅ ดึง user จาก Firebase Authentication
-        const sid = user.uid; // ✅ ใช้ uid เป็นรหัสนักศึกษา (sid)
-      
-        // ✅ บันทึกข้อมูลลง Firestore ใน Collection `Student`
-        await setDoc(doc(db, "Student", sid), {
-          username,
-          email,
-          phoneNumber,
-          studentId,
-          createdAt: new Date(),
-        });
-      
-        Alert.alert("✅ สมัครสมาชิกสำเร็จ!", "กำลังพาไปหน้า Login...");
-        setTimeout(() => navigation.navigate("Login"), 1500);
-      } catch (error) {
-        Alert.alert("❌ สมัครไม่สำเร็จ", error.message);
-      }
-      setLoading(false);
-      
+      // ✅ สร้างบัญชีผู้ใช้ Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user; 
+      const sid = user.uid; 
+
+      // ✅ บันทึกข้อมูลลง Firestore
+      await setDoc(doc(db, "Student", sid), {
+        username,
+        email,
+        phoneNumber,
+        studentId,
+        createdAt: new Date(),
+      });
+
+      Alert.alert("✅ สมัครสมาชิกสำเร็จ!", "กำลังพาไปหน้า Login...");
+      setTimeout(() => navigation.navigate("Login"), 1500);
+    } catch (error) {
+      Alert.alert("❌ สมัครไม่สำเร็จ", error.message);
+    }
+    setLoading(false);
   };
 
   return (
@@ -91,13 +102,14 @@ const RegisterScreen = ({ navigation }) => {
         <MaterialIcons name="phone" size={24} color="gray" />
         <TextInput
           style={styles.input}
-          placeholder="Phone Number"
+          placeholder="Phone Number (+66...)"
           keyboardType="phone-pad"
           value={phoneNumber}
           onChangeText={setPhoneNumber}
         />
       </View>
-      {/* StudentID Input */}
+
+      {/* Student ID Input */}
       <View style={styles.inputContainer}>
         <MaterialIcons name="book" size={24} color="gray" />
         <TextInput
@@ -121,7 +133,7 @@ const RegisterScreen = ({ navigation }) => {
   );
 };
 
-//สไตล์ของหน้า Register
+// ✅ สไตล์ของหน้า Register
 const styles = {
   container: {
     flex: 1,
