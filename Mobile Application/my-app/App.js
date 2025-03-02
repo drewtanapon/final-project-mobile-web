@@ -7,6 +7,7 @@ import HomeScreen from "./HomeScreen";
 import OTPScreen from "./OTPScreen";
 import LinkPhoneScreen from "./LinkEmailAndPhone";  
 import ShowClassScreen from "./ShowClassScreen";
+import JoinClassScreen from "./JoinClass";
 
 const Stack = createStackNavigator();
 
@@ -20,6 +21,7 @@ export default function App() {
         <Stack.Screen name="OTPLogin" component={OTPScreen}/>
         <Stack.Screen name="LinkEmailAndPhone" component={LinkPhoneScreen}/>
         <Stack.Screen name="ShowClass" component={ShowClassScreen} />
+        <Stack.Screen name="JoinClass" component={JoinClassScreen}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
