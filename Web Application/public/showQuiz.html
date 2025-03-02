@@ -219,6 +219,7 @@
           <th>หมายเลขคำถาม</th>
           <th>คำถาม</th>
           <th>แสดงคำถาม</th>
+          <th>เปิด/ปิด</th>
         </tr>
       </thead>
       <tbody id="questionList">
@@ -266,8 +267,7 @@
           .doc(subjectId)
           .collection("question")
           .orderBy("question_no", "asc")
-          .get()
-          .then(snapshot => {
+          .onSnapshot(snapshot => { // ใช้ onSnapshot ให้ข้อมูลอัปเดตเรียลไทม์
             const questionList = document.getElementById("questionList");
             questionList.innerHTML = "";
 
@@ -282,7 +282,12 @@
                 <tr>
                   <td>${data.question_no}</td>
                   <td>${data.question_text}</td>
-                  <td>${data.question_show ? '✅' : '❌'}</td>
+                  <td id="status-${doc.id}">${data.question_show ? '✅ เปิด' : '❌ ปิด'}</td>
+                  <td>
+                    <button id="toggle-${doc.id}" onclick="toggleQuestion('${doc.id}', ${data.question_show})">
+                      ${data.question_show ? 'ปิดคำถาม' : 'เปิดคำถาม'}
+                    </button>
+                  </td>
                 </tr>
               `;
               questionList.innerHTML += row;
@@ -294,6 +299,19 @@
         window.location.href = "login.html";
       }
     });
+
+    function toggleQuestion(questionId, currentState) {
+      const questionRef = db.collection("classroom").doc(subjectId).collection("question").doc(questionId);
+
+      questionRef.update({
+        question_show: !currentState
+      }).then(() => {
+        console.log("อัปเดตสถานะคำถามสำเร็จ");
+      }).catch(error => {
+        console.error("เกิดข้อผิดพลาดในการอัปเดต:", error);
+        alert("❌ อัปเดตสถานะไม่สำเร็จ");
+      });
+    }
 
     // ฟังก์ชันไปหน้า createQuiz
     function toggleCreateQuiz(){
