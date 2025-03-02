@@ -220,10 +220,29 @@
           <th>คำถาม</th>
           <th>แสดงคำถาม</th>
           <th>เปิด/ปิด</th>
+          <th>ดูคำตอบ</th>
         </tr>
       </thead>
       <tbody id="questionList">
         <tr><td colspan="3">กำลังโหลดข้อมูล...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 🔥 ตารางแสดงคำตอบของนักศึกษา -->
+  <div class="container">
+    <h2>📢 คำตอบของนักศึกษา</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ลำดับ</th>
+          <th>รหัสนักศึกษา</th>
+          <th>ชื่อ</th>
+          <th>คำตอบ</th>
+        </tr>
+      </thead>
+      <tbody id="answerTableBody">
+        <tr><td colspan="4">เลือกคำถามเพื่อดูคำตอบ</td></tr>
       </tbody>
     </table>
   </div>
@@ -284,9 +303,12 @@
                   <td>${data.question_text}</td>
                   <td id="status-${doc.id}">${data.question_show ? '✅ เปิด' : '❌ ปิด'}</td>
                   <td>
-                    <button id="toggle-${doc.id}" onclick="toggleQuestion('${doc.id}', ${data.question_show})">
+                    <button onclick="toggleQuestion('${doc.id}', ${data.question_show})">
                       ${data.question_show ? 'ปิดคำถาม' : 'เปิดคำถาม'}
                     </button>
+                  </td>
+                  <td>
+                    <button onclick="loadStudentAnswers('${doc.id}')">ดูคำตอบ</button>
                   </td>
                 </tr>
               `;
@@ -312,6 +334,83 @@
         alert("❌ อัปเดตสถานะไม่สำเร็จ");
       });
     }
+
+    async function loadStudentAnswers(questionId) {
+    const answerTableBody = document.getElementById("answerTableBody");
+    answerTableBody.innerHTML = "<tr><td colspan='4'>กำลังโหลดข้อมูล...</td></tr>";
+
+    if (!questionId) {
+        console.error("❌ questionId is null or undefined");
+        return;
+    }
+
+    // ✅ ลบไฮไลต์จากคำถามอื่นก่อน
+    document.querySelectorAll(".selected-question").forEach(row => {
+        row.classList.remove("selected-question");
+    });
+
+    const selectedRow = document.getElementById("row-" + questionId);
+    if (selectedRow) {
+        selectedRow.classList.add("selected-question");
+    } else {
+        console.warn("⚠️ No row found for questionId:", questionId);
+    }
+
+    try {
+        // ✅ ดึงคำตอบของนักเรียนจาก Firestore
+        const answersRef = db.collection("classroom").doc(subjectId).collection("question").doc(questionId).collection("answers");
+        const querySnapshot = await answersRef.get();
+
+        answerTableBody.innerHTML = "";
+        let index = 1;
+
+        if (querySnapshot.empty) {
+            console.warn("⚠️ ไม่มีคำตอบสำหรับคำถามนี้");
+            answerTableBody.innerHTML = "<tr><td colspan='4'>❌ ยังไม่มีนักเรียนตอบคำถามนี้</td></tr>";
+            return;
+        }
+
+        for (const doc of querySnapshot.docs) {
+            const uid = doc.id;
+            const answerData = doc.data();
+
+            console.log(`📡 คำตอบจากนักเรียน UID: ${uid}`, answerData);
+
+            try {
+                // ✅ ดึง studentId จาก Collection `Student`
+                const studentRef = db.collection("Student").doc(uid);
+                const studentDoc = await studentRef.get();
+
+                if (!studentDoc.exists) {
+                    console.warn(`⚠️ ไม่มีข้อมูลนักศึกษาสำหรับ UID: ${uid}`);
+                    continue;
+                }
+
+                const studentData = studentDoc.data();
+                const studentId = studentData.studentId || "❌ ไม่มีรหัส";
+                const studentName = studentData.username || "❌ ไม่พบชื่อ";
+
+                console.log(`📡 ข้อมูลนักศึกษา: ${studentId} - ${studentName}`);
+
+                // ✅ เพิ่มข้อมูลนักศึกษาในตาราง
+                const row = `
+                    <tr>
+                        <td>${index++}</td>
+                        <td>${studentId}</td>
+                        <td>${studentName}</td>
+                        <td>${answerData.text || "❌ ไม่ได้ตอบ"}</td>
+                    </tr>
+                `;
+                answerTableBody.innerHTML += row;
+            } catch (error) {
+                console.error("❌ Error fetching student data:", error);
+            }
+        }
+    } catch (error) {
+        console.error("❌ Error fetching answers:", error);
+    }
+}
+
 
     // ฟังก์ชันไปหน้า createQuiz
     function toggleCreateQuiz(){

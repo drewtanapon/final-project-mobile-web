@@ -138,8 +138,8 @@ const JoinClassScreen = ({ navigation, route }) => {
     if (!answer) return Alert.alert("กรุณากรอกคำตอบ");
 
     try {
-      const answerRef = doc(db, `classroom/${cid}/checkin/${cno}/answers/${uid}`);
-      await setDoc(answerRef, { text: answer }, { merge: true });
+      const answerRef = doc(db, `classroom/${cid}/question/${qid}/answers/${uid}`);
+      await setDoc(answerRef, { text: answer, timestamp: new Date() }, { merge: true });
       Alert.alert("✅ ส่งคำตอบสำเร็จ!");
     } catch (error) {
       Alert.alert("❌ ส่งคำตอบไม่สำเร็จ", error.message);
