@@ -246,7 +246,6 @@
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
       <button id="btn-back" onclick="goBack()">กลับไปหน้าหลัก</button>
-     
     </div>
   </div>
 
@@ -310,15 +309,14 @@
 
   <script>
     // ดึง subjectId จาก query string
-    let urlParams = new URLSearchParams(window.location.search);
-    let subjectId = urlParams.get('subjectId') || sessionStorage.getItem('subjectId');
+    const urlParams = new URLSearchParams(window.location.search);
+    const subjectId = urlParams.get("subjectId");
 
-
-    if (!subjectId) {
-    console.error("❌ ไม่พบ subjectId");
+    if (subjectId) {
+        console.log("นักเรียนกำลังลงทะเบียนในวิชา:", subjectId);
+        // TODO: ลงทะเบียนนักเรียนในฐานข้อมูล
     } else {
-        console.log("✅ subjectId:", subjectId);
-        sessionStorage.setItem('subjectId', subjectId); // เก็บค่าไว้ใช้ในหน้าอื่น
+        console.log("❌ ไม่พบ Subject ID");
     }
 
     console.log(subjectId);
@@ -362,23 +360,34 @@
     });
 
     // เมื่อคลิกปุ่มแสดง QR Code
-    document.getElementById("btn-qr").addEventListener("click", function(){
-      // แสดง modal สำหรับ QR Code
+    document.getElementById("btn-qr").addEventListener("click", function() {
+      if (!subjectId) {
+          alert("กรุณากรอก Subject ID ก่อน!");
+          return;
+      }
+
+      // ตรวจจับว่าอยู่ใน Localhost หรือ GitHub Pages
+      const baseUrl = window.location.origin.includes("localhost") 
+          ? "http://localhost:3000"  // URL สำหรับตอนพัฒนา
+          : "https://drewtanapon.github.io/final-project-mobile-web"; // URL สำหรับ GitHub Pages
+
+      // สร้าง URL สำหรับการลงทะเบียน
+      const registrationUrl = `${baseUrl}/register?subjectId=${subjectId}`;
+
+      // แสดง QR Code
       document.getElementById("qr-modal").style.display = "block";
-      // ล้าง container ก่อนสร้างใหม่ (กรณีคลิกหลายครั้ง)
-      document.getElementById("qr-code").innerHTML = "";
-      // สร้าง URL สำหรับการลงทะเบียนวิชาโดยใช้ subjectId
-      const registrationUrl = `https://yourdomain.com/register?subjectId=${subjectId}`;
-      // สร้าง QR Code ด้วย registrationUrl
+      document.getElementById("qr-code").innerHTML = ""; // ล้าง QR Code เก่า
+
       new QRCode(document.getElementById("qr-code"), {
-        text: registrationUrl,
-        width: 128,
-        height: 128,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
+          text: registrationUrl,
+          width: 150,
+          height: 150,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
       });
     });
+
 
     // ฟังก์ชันปิด modal QR Code
     function closeQR() {
@@ -670,6 +679,36 @@
           console.error("❌ เกิดข้อผิดพลาดในการเพิ่มนักเรียน:", error);
           alert("เกิดข้อผิดพลาดในการเพิ่มนักเรียน");
         });
+    }
+    function removeStudent(studentId) {
+      if (!subjectId) {
+          alert("❌ ไม่พบ Subject ID");
+          return;
+      }
+
+      if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการถอดนักศึกษาคนนี้ออกจากวิชานี้?")) {
+          return; // ยกเลิกการลบถ้าผู้ใช้กดยกเลิก
+      }
+
+      // ✅ ลบเฉพาะจากรายวิชาเท่านั้น
+      const classStudentRef = db.collection("classroom").doc(subjectId).collection("Student").doc(studentId);
+      
+      classStudentRef.delete()
+          .then(() => {
+              console.log(`✅ ลบนักศึกษา ${studentId} ออกจากวิชา ${subjectId} แล้ว`);
+              
+              // ✅ ลบข้อมูลของวิชานี้ออกจาก subjectList ของนักศึกษา
+              const studentSubjectRef = db.collection("Student").doc(studentId).collection("subjectList").doc(subjectId);
+              return studentSubjectRef.delete();
+          })
+          .then(() => {
+              alert("✅ ถอดนักศึกษาออกจากวิชาสำเร็จ");
+              loadStudent(); // โหลดรายชื่อนักเรียนใหม่
+          })
+          .catch((error) => {
+              console.error("❌ เกิดข้อผิดพลาดในการลบนักศึกษา:", error);
+              alert("❌ ไม่สามารถถอดนักศึกษาออกจากวิชาได้");
+          });
     }
     function goBack() {
       window.location.href = "index.html";

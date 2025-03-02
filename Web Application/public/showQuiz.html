@@ -248,8 +248,16 @@
   </div>
 
   <script>
+    // ดึง subjectId จาก query string
     const urlParams = new URLSearchParams(window.location.search);
-    const subjectId = urlParams.get('subjectId');
+    const subjectId = urlParams.get("subjectId");
+
+    if (subjectId) {
+        console.log("นักเรียนกำลังลงทะเบียนในวิชา:", subjectId);
+        // TODO: ลงทะเบียนนักเรียนในฐานข้อมูล
+    } else {
+        console.log("❌ ไม่พบ Subject ID");
+    }
     
     const firebaseConfig = {
       apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
@@ -265,15 +273,13 @@
         const userId = user.uid;
 
         // ดึงข้อมูลวิชา
-        db.collection("users")
-          .doc(userId)
-          .collection("classroom")
+        db.collection("classroom")
           .doc(subjectId)
           .onSnapshot((doc) => {
             if (doc.exists) {
               const data = doc.data();
-              document.getElementById("display-subjectCode").innerText = data.code || "ไม่ระบุ";
-              document.getElementById("display-subjectName").innerText = data.name || "ไม่ระบุ";
+              document.getElementById("display-subjectCode").innerText = data.info.code || "ไม่ระบุ";
+              document.getElementById("display-subjectName").innerText = data.info.name || "ไม่ระบุ";
               // อัปเดต background-image ของ header
               if (data.photo) {
                 document.getElementById("header").style.backgroundImage = `url('${data.photo}')`;
@@ -427,20 +433,35 @@
       window.location.href = `manageClass.html?subjectId=${subjectId}`;
     }
 
-    // ปุ่มแสดง QR
-    document.getElementById("btn-qr").addEventListener("click", function(){
+    // เมื่อคลิกปุ่มแสดง QR Code
+    document.getElementById("btn-qr").addEventListener("click", function() {
+      if (!subjectId) {
+          alert("กรุณากรอก Subject ID ก่อน!");
+          return;
+      }
+
+      // ตรวจจับว่าอยู่ใน Localhost หรือ GitHub Pages
+      const baseUrl = window.location.origin.includes("localhost") 
+          ? "http://localhost:3000"  // URL สำหรับตอนพัฒนา
+          : "https://drewtanapon.github.io/final-project-mobile-web"; // URL สำหรับ GitHub Pages
+
+      // สร้าง URL สำหรับการลงทะเบียน
+      const registrationUrl = `${baseUrl}/register?subjectId=${subjectId}`;
+
+      // แสดง QR Code
       document.getElementById("qr-modal").style.display = "block";
-      document.getElementById("qr-code").innerHTML = "";
-      const registrationUrl = `https://yourdomain.com/register?subjectId=${subjectId}`;
+      document.getElementById("qr-code").innerHTML = ""; // ล้าง QR Code เก่า
+
       new QRCode(document.getElementById("qr-code"), {
-        text: registrationUrl,
-        width: 128,
-        height: 128,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
+          text: registrationUrl,
+          width: 150,
+          height: 150,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
       });
     });
+    
     // ปิด QR Modal
     function closeQR() {
       document.getElementById("qr-modal").style.display = "none";

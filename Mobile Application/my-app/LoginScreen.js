@@ -1,8 +1,19 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  ImageBackground,
+  StyleSheet,
+} from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { auth } from "./firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { Asset } from "expo-asset";
+import { Image } from "react-native";
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
@@ -20,7 +31,7 @@ const LoginScreen = ({ navigation }) => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("Logged in UID:", userCredential.user.uid);
       Alert.alert("Success", `Logged in successfully!`);
-      navigation.replace("LinkEmailAndPhone"); 
+      navigation.replace("LinkEmailAndPhone");
     } catch (error) {
       Alert.alert("Login Failed", error.message);
     }
@@ -37,60 +48,79 @@ const LoginScreen = ({ navigation }) => {
     navigation.navigate("Register");
   };
 
+  const image = Asset.fromModule(require("./assets/fish.gif")).uri; 
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <ImageBackground
+        source={{ uri: image }}
+        style={styles.background}
+        resizeMode="cover"
+      >
 
-      {/* Email Input */}
-      <View style={styles.inputContainer}>
-        <MaterialIcons name="email" size={24} color="gray" />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
+      <Image source={{ uri: "https://media.tenor.com/-SC7uwUlHqUAAAAj/fish-groove.gif" }} style={{ width: 80, height: 80 }} />
+
+
+      <View style={styles.container}>
+        <Text style={styles.title}>Login</Text>
+
+        {/* Email Input */}
+        <View style={styles.inputContainer}>
+          <MaterialIcons name="email" size={24} color="gray" />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+        </View>
+        
+        {/* Password Input */}
+        <View style={styles.inputContainer}>
+          <MaterialIcons name="lock" size={24} color="gray" />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+        </View>
+
+        {/* Login Button */}
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Login</Text>}
+        </TouchableOpacity>
+
+        {/* Login with OTP Button */}
+        <TouchableOpacity style={styles.otpButton} onPress={handleOTPLogin}>
+          <Text style={styles.buttonText}>Login with OTP</Text>
+        </TouchableOpacity>
+
+        {/* Register Button */}
+        <TouchableOpacity style={styles.registerButton} onPress={handleRegister}> 
+          <Text style={styles.registerText}>Register</Text>
+        </TouchableOpacity>
       </View>
-
-      {/* Password Input */}
-      <View style={styles.inputContainer}>
-        <MaterialIcons name="lock" size={24} color="gray" />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-      </View>
-
-      {/* Login Button */}
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Login</Text>}
-      </TouchableOpacity>
-
-      {/* Login with OTP Button */}
-      <TouchableOpacity style={styles.otpButton} onPress={handleOTPLogin}>
-        <Text style={styles.buttonText}>Login with OTP</Text>
-      </TouchableOpacity>
-
-      {/* Register Button */}
-      <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-        <Text style={styles.registerText}>Register</Text>
-      </TouchableOpacity>
-    </View>
+    </ImageBackground>
   );
 };
 
 // Styles
-const styles = {
-  container: {
+const styles = StyleSheet.create({
+  background: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f4f4f4",
-    paddingHorizontal: 20,
+    width: "100%",
+    height: "100%",
+  },
+  container: {
+    width: "90%",
+    padding: 20,
+    backgroundColor: "rgba(196, 220, 220, 0.54)", // ทำให้พื้นหลังจางลงเพื่อให้อ่านง่าย
+    borderRadius: 10,
+    alignItems: "center",
   },
   title: {
     fontSize: 28,
@@ -143,6 +173,6 @@ const styles = {
     fontSize: 16,
     color: "#007bff",
   },
-};
+});
 
 export default LoginScreen;
