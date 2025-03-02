@@ -61,6 +61,11 @@ const ShowClassScreen = ({ navigation }) => {
               {/* ปุ่มเช็คชื่อเข้าเรียน */}
               <TouchableOpacity
                 style={styles.attendanceButton}
+              >
+                <Text style={styles.buttonText}>✔️ เช็คชื่อเข้าเรียน</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.attendanceButton}
                 onPress={() => {
                   if (item.id) {
                     // ส่งรหัสวิชา `cid` ไปที่ `JoinClass`
@@ -70,7 +75,7 @@ const ShowClassScreen = ({ navigation }) => {
                   }
                 }}
               >
-                <Text style={styles.buttonText}>✔️ เช็คชื่อเข้าเรียน</Text>
+                <Text style={styles.buttonText}>✔️ เข้าห้องเรียน</Text>
               </TouchableOpacity>
 
             </View>
