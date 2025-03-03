@@ -7,7 +7,7 @@ import HomeScreen from "./HomeScreen";
 import OTPScreen from "./OTPScreen";
 import LinkPhoneScreen from "./LinkEmailAndPhone";  
 import ShowClassScreen from "./ShowClassScreen";
-import JoinClass from "./JoinClass";
+import ClassDetail from "./ClassDetail";
 import JoinClassByCode from "./JoinClassByCode"; 
 
 
@@ -23,7 +23,7 @@ export default function App() {
         <Stack.Screen name="OTPLogin" component={OTPScreen}/>
         <Stack.Screen name="LinkEmailAndPhone" component={LinkPhoneScreen}/>
         <Stack.Screen name="ShowClass" component={ShowClassScreen} />
-        <Stack.Screen name="JoinClass" component={JoinClass}/>
+        <Stack.Screen name="ClassDetail" component={ClassDetail}/>
         <Stack.Screen name="JoinClassByCode" component={JoinClassByCode} />
       </Stack.Navigator>
     </NavigationContainer>

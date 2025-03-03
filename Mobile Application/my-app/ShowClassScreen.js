@@ -117,9 +117,6 @@ const ShowClassScreen = ({ navigation }) => {
       "plain-text"
     );
   };
-
-  
-  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>📚 รายวิชาที่เรียน</Text>
@@ -140,17 +137,25 @@ const ShowClassScreen = ({ navigation }) => {
               >
                 <Text style={styles.buttonText}>✔️ เช็คชื่อเข้าเรียน</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.attendanceButton}
+                onPress={() => {
+                  if (item.id) {
+                    
+                    navigation.navigate("ClassDetail", { cid: item.id });
+                  } else {
+                    Alert.alert("⚠️ ข้อมูลไม่ถูกต้อง");
+                  }
+                }}
+              >
+                <Text style={styles.buttonText}>✔️ เข้าห้องเรียน</Text>
+              </TouchableOpacity>
             </View>
           )}
         />
       ) : (
         <Text style={styles.noClassText}>❌ ยังไม่มีรายวิชาที่เรียน</Text>
       )}
-      {/* ✅ ปุ่ม Refresh */}
-      <TouchableOpacity style={styles.refreshButton} onPress={fetchClasses}>
-        <Text style={styles.buttonText}>🔄 รีเฟรชรายวิชา</Text>
-      </TouchableOpacity>
-
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Text style={styles.buttonText}>🔙 ย้อนกลับ</Text>
       </TouchableOpacity>
