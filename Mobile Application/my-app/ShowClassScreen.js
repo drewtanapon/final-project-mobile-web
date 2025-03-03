@@ -144,6 +144,9 @@ const ShowClassScreen = ({ navigation }) => {
       ) : (
         <Text style={styles.noClassText}>❌ ยังไม่มีรายวิชาที่เรียน</Text>
       )}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Text style={styles.buttonText}>🔙 ย้อนกลับ</Text>
+      </TouchableOpacity>
     </View>
   );
 };
