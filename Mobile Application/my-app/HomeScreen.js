@@ -96,6 +96,15 @@ const HomeScreen = ({ navigation }) => {
       Alert.alert("❌ ออกจากระบบไม่สำเร็จ", error.message);
     }
   };
+  const handleJoin = async () => {
+    try {
+      await signOut(auth);
+      navigation.replace("JoinClassScreen");
+    } catch (error) {
+      Alert.alert("❌ ออกจากระบบไม่สำเร็จ", error.message);
+    }
+  };
+
 
   // ✅ ฟังก์ชันสแกน QR Code
   const handleBarCodeScanned = async ({ data }) => {
@@ -217,10 +226,18 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.buttonText}>สแกน QR Code เข้าร่วมชั้นเรียน</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity 
+              style={styles.joinClassButton} 
+              onPress={() => navigation.navigate("JoinClassByCode")}
+            >
+              <Ionicons name="enter-outline" size={24} color="#fff" style={styles.buttonIcon} />
+              <Text style={styles.buttonText}>เข้าร่วมชั้นเรียนด้วยรหัส</Text>
+            </TouchableOpacity>
+            
+
             <TouchableOpacity size={24} style={styles.showClassButton} onPress={() => navigation.navigate("ShowClass")} >
             <Text style={styles.buttonText}>แสดงรายวิชาที่เรียน</Text>
-          </TouchableOpacity>
-
+            </TouchableOpacity>
             <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
               <Ionicons name="log-out-outline" size={24} color="#fff" style={styles.buttonIcon} />
               <Text style={styles.buttonText}>ออกจากระบบ</Text>
@@ -353,6 +370,15 @@ const styles = StyleSheet.create({
   },
   scanButton: {
     backgroundColor: "#28a745",
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    marginBottom: 12,
+  },
+  joinClassButton: {
+    backgroundColor: "#17a2b8", // สีฟ้า (Bootstrap Info)
     borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",

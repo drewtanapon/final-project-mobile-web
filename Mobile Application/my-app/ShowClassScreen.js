@@ -8,40 +8,42 @@ const ShowClassScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [studentId, setStudentId] = useState("");
 
-  
-  useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          Alert.alert("⚠️ กรุณาเข้าสู่ระบบใหม่");
-          navigation.replace("Login");
-          return;
-        }
-        setStudentId(user.uid);
-        const studentRef = doc(db, "Student", user.uid);
-        const subjectListRef = collection(studentRef, "subjectList");
-        const querySnapshot = await getDocs(subjectListRef);
-
-        
-
-        if (!querySnapshot.empty) {
-          const subjects = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          setClasses(subjects);
-        } else {
-          setClasses([]);
-        }
-      } catch (error) {
-        Alert.alert("❌ ข้อผิดพลาด", error.message);
+  const fetchClasses = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        Alert.alert("⚠️ กรุณาเข้าสู่ระบบใหม่");
+        navigation.replace("Login");
+        return;
       }
-      setLoading(false);
-    };
+      setStudentId(user.uid);
+      const studentRef = doc(db, "Student", user.uid);
+      const subjectListRef = collection(studentRef, "subjectList");
+      const querySnapshot = await getDocs(subjectListRef);
 
+      
+
+      if (!querySnapshot.empty) {
+        const subjects = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setClasses(subjects);
+      } else {
+        setClasses([]);
+      }
+    } catch (error) {
+      Alert.alert("❌ ข้อผิดพลาด", error.message);
+    }
+    setLoading(false);
+  };
+
+
+  useEffect(() => {
     fetchClasses();
-  }, []);
+    const unsubscribe = navigation.addListener("focus", fetchClasses);
+    return unsubscribe;
+  }, [navigation]);
 
   const markAttendance = async (classId) => {
     try {
@@ -151,6 +153,11 @@ const ShowClassScreen = ({ navigation }) => {
       ) : (
         <Text style={styles.noClassText}>❌ ยังไม่มีรายวิชาที่เรียน</Text>
       )}
+      {/* ✅ ปุ่ม Refresh */}
+      <TouchableOpacity style={styles.refreshButton} onPress={fetchClasses}>
+        <Text style={styles.buttonText}>🔄 รีเฟรชรายวิชา</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Text style={styles.buttonText}>🔙 ย้อนกลับ</Text>
       </TouchableOpacity>
@@ -190,6 +197,14 @@ const styles = StyleSheet.create({
   classText: {
     color: "#fff",
     fontSize: 18,
+  },
+  refreshButton: {
+    backgroundColor: "#17a2b8",
+    width: "80%",
+    paddingVertical: 15,
+    alignItems: "center",
+    borderRadius: 12,
+    marginTop: 10,
   },
   attendanceButton: {
     backgroundColor: "#28a745",

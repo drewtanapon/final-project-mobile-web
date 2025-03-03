@@ -65,7 +65,7 @@ const LinkPhoneScreen = ({ navigation }) => {
       await linkWithCredential(user, credential);
       await auth.currentUser.reload();
       Alert.alert("✅ ผูกเบอร์โทรสำเร็จ!");
-      navigation.navigate("Home");
+      navigation.replace("Home");
     } catch (error) {
       Alert.alert("❌ ผูกเบอร์โทรไม่สำเร็จ", error.message);
     }
