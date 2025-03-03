@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ImageBackground, Image } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { auth, db, createUserWithEmailAndPassword, doc, setDoc } from "./firebaseConfig";
 
@@ -13,7 +13,7 @@ const RegisterScreen = ({ navigation }) => {
 
   // ✅ ฟังก์ชันตรวจสอบรูปแบบเบอร์โทรศัพท์
   const validatePhoneNumber = (phone) => {
-    const phoneRegex = /^\+\d{7,15}$/; // ✅ ต้องขึ้นต้นด้วย "+" และตามด้วยตัวเลข 7-15 หลัก
+    const phoneRegex = /^\+\d{7,15}$/;
     return phoneRegex.test(phone);
   };
 
@@ -36,12 +36,10 @@ const RegisterScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      // ✅ สร้างบัญชีผู้ใช้ Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user; 
-      const sid = user.uid; 
+      const user = userCredential.user;
+      const sid = user.uid;
 
-      // ✅ บันทึกข้อมูลลง Firestore
       await setDoc(doc(db, "Student", sid), {
         username,
         email,
@@ -59,92 +57,101 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>สมัครสมาชิก</Text>
+    <ImageBackground
+      source={{ uri: "https://i.pinimg.com/originals/76/01/a3/7601a31e47247077856ed69b7b4fa124.gif" }}
+      style={styles.background}
+    >
+      <View style={styles.overlay}>
+        
 
-      {/* Username Input */}
-      <View style={styles.inputContainer}>
-        <MaterialIcons name="person" size={24} color="gray" />
-        <TextInput
-          style={styles.input}
-          placeholder="Username"
-          value={username}
-          onChangeText={setUsername}
-        />
+        {/* หัวข้อ สมัครสมาชิก */}
+        <Text style={styles.title}>สมัครสมาชิก</Text>
+
+        {/* Username */}
+        <View style={styles.inputContainer}>
+          <MaterialIcons name="person" size={24} color="gray" />
+          <TextInput style={styles.input} placeholder="Username" value={username} onChangeText={setUsername} />
+        </View>
+
+        {/* Email */}
+        <View style={styles.inputContainer}>
+          <MaterialIcons name="email" size={24} color="gray" />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+        </View>
+
+        {/* Password */}
+        <View style={styles.inputContainer}>
+          <MaterialIcons name="lock" size={24} color="gray" />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+        </View>
+
+        {/* Phone Number */}
+        <View style={styles.inputContainer}>
+          <MaterialIcons name="phone" size={24} color="gray" />
+          <TextInput
+            style={styles.input}
+            placeholder="Phone Number (+66...)"
+            keyboardType="phone-pad"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+          />
+        </View>
+
+        {/* Student ID */}
+        <View style={styles.inputContainer}>
+          <MaterialIcons name="book" size={24} color="gray" />
+          <TextInput style={styles.input} placeholder="Student ID" value={studentId} onChangeText={setStudentId} />
+        </View>
+
+        {/* Register Button */}
+        <TouchableOpacity style={styles.registerButton} onPress={handleRegister} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>สมัครสมาชิก</Text>}
+        </TouchableOpacity>
+
+        {/* กลับไปหน้า Login */}
+        <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate("Login")}>
+          <Text style={styles.loginText}>กลับไปหน้าเข้าสู่ระบบ</Text>
+        </TouchableOpacity>
       </View>
-
-      {/* Email Input */}
-      <View style={styles.inputContainer}>
-        <MaterialIcons name="email" size={24} color="gray" />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-      </View>
-
-      {/* Password Input */}
-      <View style={styles.inputContainer}>
-        <MaterialIcons name="lock" size={24} color="gray" />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-      </View>
-
-      {/* Phone Number Input */}
-      <View style={styles.inputContainer}>
-        <MaterialIcons name="phone" size={24} color="gray" />
-        <TextInput
-          style={styles.input}
-          placeholder="Phone Number (+66...)"
-          keyboardType="phone-pad"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
-        />
-      </View>
-
-      {/* Student ID Input */}
-      <View style={styles.inputContainer}>
-        <MaterialIcons name="book" size={24} color="gray" />
-        <TextInput
-          style={styles.input}
-          placeholder="Student ID"
-          value={studentId}
-          onChangeText={setStudentId}
-        />
-      </View>
-
-      {/* Register Button */}
-      <TouchableOpacity style={styles.registerButton} onPress={handleRegister} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>สมัครสมาชิก</Text>}
-      </TouchableOpacity>
-
-      {/* กลับไปหน้า Login */}
-      <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate("Login")}>
-        <Text style={styles.loginText}>กลับไปหน้าเข้าสู่ระบบ</Text>
-      </TouchableOpacity>
-    </View>
+    </ImageBackground>
   );
 };
 
 // ✅ สไตล์ของหน้า Register
 const styles = {
-  container: {
+  background: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  },
+  overlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f4f4f4",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // ทำให้พื้นหลังมืดลง
     paddingHorizontal: 20,
+  },
+  gifImage: {
+    width: 150,
+    height: 150,
+    marginBottom: 10, // ให้เว้นระยะห่างจากหัวข้อ
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
+    color: "#fff",
     marginBottom: 20,
   },
   inputContainer: {

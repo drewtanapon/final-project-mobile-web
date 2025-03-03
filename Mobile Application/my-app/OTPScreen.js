@@ -1,6 +1,5 @@
-// OTPScreen.js
 import React, { useState, useRef } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ImageBackground } from "react-native";
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { MaterialIcons } from "@expo/vector-icons";
 import { 
@@ -10,7 +9,6 @@ import {
   PhoneAuthProvider,
   signInWithCredential,
   db,
-  // ส่วนที่เกี่ยวกับ Firestore
   collection,
   query,
   where,
@@ -23,10 +21,8 @@ const OTPScreen = ({ navigation }) => {
   const [verificationCode, setVerificationCode] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // สร้าง ref สำหรับ RecaptchaVerifier
   const recaptchaVerifier = useRef(null);
 
-  // ฟังก์ชันตรวจสอบเบอร์ใน Firestore (ตามที่คุณใช้งาน)
   const checkPhoneNumberExists = async (phone) => {
     try {
       const usersRef = collection(db, "Student");
@@ -47,7 +43,6 @@ const OTPScreen = ({ navigation }) => {
     return phone;
   };
 
-  // ฟังก์ชันส่ง OTP โดยใช้ recaptchaVerifier
   const sendOTP = async () => {
     const formattedPhone = formatPhoneNumber(phoneNumber);
     if (!formattedPhone) return;
@@ -55,7 +50,6 @@ const OTPScreen = ({ navigation }) => {
     setLoading(true);
 
     try {
-      // (ถ้าต้องการตรวจสอบเบอร์ใน Firestore ก่อน)
       const phoneExists = await checkPhoneNumberExists(formattedPhone);
       if (!phoneExists) {
         Alert.alert("❌ เบอร์นี้ยังไม่ได้สมัครสมาชิก", "กรุณาสมัครสมาชิกก่อน");
@@ -63,7 +57,6 @@ const OTPScreen = ({ navigation }) => {
         return;
       }
 
-      // ส่ง OTP โดยส่ง recaptchaVerifier.current เป็นพารามิเตอร์ที่ 3
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier.current);
       setVerificationId(confirmation.verificationId);
       Alert.alert("✅ OTP ถูกส่งแล้ว", "โปรดตรวจสอบข้อความในโทรศัพท์ของคุณ");
@@ -94,65 +87,77 @@ const OTPScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>เข้าสู่ระบบด้วย OTP</Text>
+    <ImageBackground source={{ uri: "https://i.pinimg.com/originals/c6/e2/0f/c6e20f412ae31308f7e704d0f4304bb8.gif" }} 
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>เข้าสู่ระบบด้วย OTP</Text>
 
-      {/* เพิ่ม Recaptcha Modal */}
-      <FirebaseRecaptchaVerifierModal
-        ref={recaptchaVerifier}
-        firebaseConfig={firebaseConfig}
-        // optional: คุณสามารถกำหนดเพิ่มเติม เช่น timeout, attemptInvisibleVerification: true
-      />
-
-      <View style={styles.inputContainer}>
-        <MaterialIcons name="phone" size={24} color="gray" />
-        <TextInput
-          style={styles.input}
-          placeholder="Phone Number (+66...)"
-          keyboardType="phone-pad"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
+        <FirebaseRecaptchaVerifierModal
+          ref={recaptchaVerifier}
+          firebaseConfig={firebaseConfig}
         />
+
+        <View style={styles.inputContainer}>
+          <MaterialIcons name="phone" size={24} color="gray" />
+          <TextInput
+            style={styles.input}
+            placeholder="Phone Number (+66...)"
+            keyboardType="phone-pad"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+          />
+        </View>
+
+        <TouchableOpacity style={styles.sendOTPButton} onPress={sendOTP} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>ส่ง OTP</Text>}
+        </TouchableOpacity>
+
+        {verificationId && (
+          <>
+            <View style={styles.inputContainer}>
+              <MaterialIcons name="vpn-key" size={24} color="gray" />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter OTP"
+                keyboardType="number-pad"
+                value={verificationCode}
+                onChangeText={setVerificationCode}
+              />
+            </View>
+
+            <TouchableOpacity style={styles.verifyOTPButton} onPress={verifyOTP} disabled={loading}>
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>ยืนยัน OTP</Text>}
+            </TouchableOpacity>
+          </>
+        )}
       </View>
-
-      <TouchableOpacity style={styles.sendOTPButton} onPress={sendOTP} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>ส่ง OTP</Text>}
-      </TouchableOpacity>
-
-      {verificationId && (
-        <>
-          <View style={styles.inputContainer}>
-            <MaterialIcons name="vpn-key" size={24} color="gray" />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter OTP"
-              keyboardType="number-pad"
-              value={verificationCode}
-              onChangeText={setVerificationCode}
-            />
-          </View>
-
-          <TouchableOpacity style={styles.verifyOTPButton} onPress={verifyOTP} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>ยืนยัน OTP</Text>}
-          </TouchableOpacity>
-        </>
-      )}
-    </View>
+    </ImageBackground>
   );
 };
 
 const styles = {
-  container: {
+  background: {
     flex: 1,
+    width: "100%",
+    height: "100%",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f4f4f4",
-    paddingHorizontal: 20,
+  },
+  container: {
+    width: "90%",
+    padding: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.85)", // ใส่ความโปร่งใสให้พื้นหลังดูอ่านง่ายขึ้น
+    borderRadius: 10,
+    alignItems: "center",
+    elevation: 5,
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 20,
+    color: "#333",
   },
   inputContainer: {
     flexDirection: "row",
