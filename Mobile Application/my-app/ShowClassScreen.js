@@ -47,58 +47,71 @@ const ShowClassScreen = ({ navigation }) => {
 
   const markAttendance = async (classId, remark) => {
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        Alert.alert("⚠️ กรุณาเข้าสู่ระบบ");
-        return;
-      }
-
-      console.log("📌 เริ่มเช็คชื่อสำหรับ classId:", classId, "id:", studentId);
-      const studentRef = doc(db, "Student", studentId);
-      const studentSnap = await getDoc(studentRef);
-
-      if (!studentSnap.exists()) {
-        Alert.alert("❌ ไม่พบข้อมูลนักเรียน");
-        return;
-      }
-
-      const studentData = studentSnap.data();
-      const sid = studentData.studentId || "N/A";
-      const username = studentData.username || "ไม่มีชื่อ";
-
-      const checkInRef = collection(db, "classroom", classId, "checkin");
-      const checkinCollec = await getDocs(checkInRef);
-
-      if (checkinCollec.empty) {
-        Alert.alert("❌ ไม่มีข้อมูลการเช็คชื่อ");
-        return;
-      }
-
-      for (const docSnap of checkinCollec.docs) {
-        const docData = docSnap.data();
-        console.log("🔍 เจอ checkin:", docSnap.id, "status:", docData.status);
-
-        if (docData.status === "open") {
-          const scoresDocRef = doc(db, "classroom", classId, "checkin", docSnap.id, "scores", user.uid);
-          console.log("📌 กำลังบันทึกข้อมูล scores:", user.uid);
-
-          await setDoc(scoresDocRef, {
-            score: 1,
-            sid: sid,
-            status: 1,
-            studentName: username,
-            remark: remark // เพิ่มหมายเหตุ
-          }, { merge: true });
-
-          console.log("✅ เช็คชื่อสำเร็จสำหรับ", user.uid);
-          Alert.alert("✔️ เช็คชื่อสำเร็จ!");
+        const user = auth.currentUser;
+        if (!user) {
+            Alert.alert("⚠️ กรุณาเข้าสู่ระบบ");
+            return;
         }
-      }
+
+        // ✅ ดึงข้อมูลของนักเรียนจาก Firestore ตาม UID
+        const studentRef = doc(db, "Student", user.uid);
+        const studentSnap = await getDoc(studentRef);
+
+        if (!studentSnap.exists()) {
+            Alert.alert("❌ ไม่พบข้อมูลนักเรียน");
+            return;
+        }
+
+        const studentData = studentSnap.data();
+        const sid = studentData.studentId || "N/A";  // ✅ ดึงค่า studentId อัตโนมัติ
+        const username = studentData.username || "ไม่มีชื่อ";  // ✅ ดึงชื่ออัตโนมัติ
+
+        // ✅ ดึงเวลาปัจจุบันของนักเรียน
+        const now = new Date();
+        const dateStr = now.toISOString().split("T")[0]; // YYYY-MM-DD
+        const timeStr = now.toLocaleTimeString("en-GB", { hour12: false }); // HH:mm:ss
+        const timestamp = now.getTime(); // ✅ แปลงเป็น timestamp (milliseconds)
+
+        console.log("📌 เวลาที่ส่งไป Firestore:", dateStr, timeStr, timestamp);
+
+        // ✅ โหลด checkin ที่กำลังเปิดอยู่
+        const checkInRef = collection(db, "classroom", classId, "checkin");
+        const checkinCollec = await getDocs(checkInRef);
+
+        if (checkinCollec.empty) {
+            Alert.alert("❌ ไม่มีข้อมูลการเช็คชื่อ");
+            return;
+        }
+
+        for (const docSnap of checkinCollec.docs) {
+            const docData = docSnap.data();
+
+            if (docData.status === 1) { // ✅ เฉพาะ checkin ที่เปิดอยู่
+                const studentDocRef = doc(
+                    db,
+                    "classroom", classId,
+                    "checkin", docSnap.id,
+                    "students", user.uid
+                );
+
+                await setDoc(studentDocRef, {
+                    studentId: sid, // ✅ ไม่ fix ค่า
+                    username: username, // ✅ ไม่ fix ค่า
+                    date: dateStr,
+                    time: timeStr,
+                    timestamp: timestamp, // ✅ ส่ง timestamp ไปด้วย
+                    remark: remark || "ไม่มีหมายเหตุ"
+                }, { merge: true });
+
+                console.log("✅ เช็คชื่อสำเร็จสำหรับ", user.uid);
+                Alert.alert("✔️ เช็คชื่อสำเร็จ!");
+            }
+        }
     } catch (error) {
-      console.error("❌ เกิดข้อผิดพลาด:", error);
-      Alert.alert("❌ ข้อผิดพลาด", error.message);
+        console.error("❌ เกิดข้อผิดพลาด:", error);
+        Alert.alert("❌ ข้อผิดพลาด", error.message);
     }
-  };
+};
   
   const handleAttendance = (classId) => {
     Alert.prompt(
