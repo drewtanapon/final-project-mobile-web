@@ -45,61 +45,53 @@ const ShowClassScreen = ({ navigation }) => {
     return unsubscribe;
   }, [navigation]);
 
-  const markAttendance = async (classId) => {
+  const markAttendance = async (classId, remark) => {
     try {
       const user = auth.currentUser;
       if (!user) {
         Alert.alert("⚠️ กรุณาเข้าสู่ระบบ");
         return;
       }
-  
+
       console.log("📌 เริ่มเช็คชื่อสำหรับ classId:", classId, "id:", studentId);
-  
-      // ดึงข้อมูลนักเรียน
       const studentRef = doc(db, "Student", studentId);
       const studentSnap = await getDoc(studentRef);
-  
+
       if (!studentSnap.exists()) {
         Alert.alert("❌ ไม่พบข้อมูลนักเรียน");
         return;
       }
-  
+
       const studentData = studentSnap.data();
-      const sid = studentData.studentId || "N/A"; // ใช้ค่าเริ่มต้นหากไม่มีข้อมูล
+      const sid = studentData.studentId || "N/A";
       const username = studentData.username || "ไม่มีชื่อ";
-  
-      // ค้นหา checkin ที่เปิดอยู่
+
       const checkInRef = collection(db, "classroom", classId, "checkin");
       const checkinCollec = await getDocs(checkInRef);
-  
+
       if (checkinCollec.empty) {
         Alert.alert("❌ ไม่มีข้อมูลการเช็คชื่อ");
         return;
       }
-  
+
       for (const docSnap of checkinCollec.docs) {
         const docData = docSnap.data();
         console.log("🔍 เจอ checkin:", docSnap.id, "status:", docData.status);
-  
+
         if (docData.status === "open") {
           const scoresDocRef = doc(db, "classroom", classId, "checkin", docSnap.id, "scores", user.uid);
-          
           console.log("📌 กำลังบันทึกข้อมูล scores:", user.uid);
-  
-          try {
-            await setDoc(scoresDocRef, {
-              score: 1,
-              sid: sid,
-              status: 1,
-              studentName: username,
-            }, { merge: true });
-  
-            console.log("✅ เช็คชื่อสำเร็จสำหรับ", user.uid);
-            Alert.alert("✔️ เช็คชื่อสำเร็จ!");
-          } catch (error) {
-            console.error("❌ ผิดพลาดในการอัปเดต:", error);
-            Alert.alert("❌ อัปเดตข้อมูลล้มเหลว", error.message);
-          }
+
+          await setDoc(scoresDocRef, {
+            score: 1,
+            sid: sid,
+            status: 1,
+            studentName: username,
+            remark: remark // เพิ่มหมายเหตุ
+          }, { merge: true });
+
+          console.log("✅ เช็คชื่อสำเร็จสำหรับ", user.uid);
+          Alert.alert("✔️ เช็คชื่อสำเร็จ!");
         }
       }
     } catch (error) {
@@ -108,7 +100,24 @@ const ShowClassScreen = ({ navigation }) => {
     }
   };
   
-  
+  const handleAttendance = (classId) => {
+    Alert.prompt(
+      "กรอกหมายเหตุ",
+      "รายละเอียดการเช็คชื่อ มาตรงเวลา หรือมาสาย เพราะอะไร?",
+      [
+        {
+          text: "ยกเลิก",
+          style: "cancel"
+        },
+        {
+          text: "ตกลง",
+          onPress: (remark) => markAttendance(classId, remark || "ไม่มีหมายเหตุ")
+        }
+      ],
+      "plain-text"
+    );
+  };
+
   
   
   return (
@@ -123,30 +132,14 @@ const ShowClassScreen = ({ navigation }) => {
           renderItem={({ item }) => (
             <View style={styles.classItem}>
               <Image source={{ uri: item.photo }} style={styles.classImage} />
-              <Text style={styles.classText}>📖 {item.name} ({item.code}) {item.id}</Text>
+              <Text style={styles.classText}>📖 {item.name} ({item.code})</Text>
               <Text style={styles.roomText}>📍 ห้อง: {item.room || "ไม่ระบุ"}</Text>
               <TouchableOpacity
                 style={styles.attendanceButton}
-                onPress={() => {
-                  markAttendance(item.id);
-                }}
+                onPress={() => handleAttendance(item.id)}
               >
-                <Text style={styles.buttonText} >✔️ เช็คชื่อเข้าเรียน</Text>
+                <Text style={styles.buttonText}>✔️ เช็คชื่อเข้าเรียน</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.attendanceButton}
-                onPress={() => {
-                  if (item.id) {
-                    // ส่งรหัสวิชา `cid` ไปที่ `JoinClass`
-                    navigation.navigate("JoinClass", { cid: item.id });
-                  } else {
-                    Alert.alert("⚠️ ข้อมูลไม่ถูกต้อง", "ไม่พบรหัสวิชา");
-                  }
-                }}
-              >
-                <Text style={styles.buttonText}>✔️ เข้าห้องเรียน</Text>
-              </TouchableOpacity>
-
             </View>
           )}
         />
