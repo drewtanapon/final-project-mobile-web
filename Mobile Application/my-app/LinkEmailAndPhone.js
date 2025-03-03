@@ -1,8 +1,21 @@
 import React, { useState, useRef } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  ImageBackground,
+  StyleSheet,
+} from "react-native";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { auth, db } from "./firebaseConfig";
-import { signInWithPhoneNumber, PhoneAuthProvider, linkWithCredential } from "firebase/auth";
+import {
+  signInWithPhoneNumber,
+  PhoneAuthProvider,
+  linkWithCredential,
+} from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { MaterialIcons } from "@expo/vector-icons";
 
@@ -16,7 +29,7 @@ const LinkPhoneScreen = ({ navigation }) => {
   const checkUserPhoneNumberMatches = async (enteredPhone) => {
     const user = auth.currentUser;
     if (!user) return false;
-  
+
     try {
       const userDocRef = doc(db, "Student", user.uid);
       const userDocSnap = await getDoc(userDocRef);
@@ -73,67 +86,80 @@ const LinkPhoneScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <FirebaseRecaptchaVerifierModal 
-        ref={recaptchaVerifier}
-        firebaseConfig={{
-          apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
-          authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
-          projectId: "webmobileapplication-cdaaf",
-          storageBucket: "webmobileapplication-cdaaf.appspot.com",
-          messagingSenderId: "90430005457",
-          appId: "1:90430005457:web:47c8bdebb51fe92435e5f0",
-          measurementId: "G-J886NPRZWK"
-        }}
-      />
-
-      <Text style={styles.title}>🔗 ผูกเบอร์โทรศัพท์</Text>
-
-      <View style={styles.inputContainer}>
-        <MaterialIcons name="phone" size={24} color="gray" />
-        <TextInput
-          style={styles.input}
-          placeholder="Phone Number (+66...)"
-          keyboardType="phone-pad"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
+    <ImageBackground
+      source={{ uri: "https://i.pinimg.com/originals/7a/c7/1e/7ac71e72373b0fb270b3a6d72e44eea3.gif" }}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <FirebaseRecaptchaVerifierModal
+          ref={recaptchaVerifier}
+          firebaseConfig={{
+            apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
+            authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
+            projectId: "webmobileapplication-cdaaf",
+            storageBucket: "webmobileapplication-cdaaf.appspot.com",
+            messagingSenderId: "90430005457",
+            appId: "1:90430005457:web:47c8bdebb51fe92435e5f0",
+            measurementId: "G-J886NPRZWK",
+          }}
         />
+
+        <Text style={styles.title}>🔗 ผูกเบอร์โทรศัพท์</Text>
+
+        <View style={styles.inputContainer}>
+          <MaterialIcons name="phone" size={24} color="gray" />
+          <TextInput
+            style={styles.input}
+            placeholder="Phone Number (+66...)"
+            keyboardType="phone-pad"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+          />
+        </View>
+
+        <TouchableOpacity style={styles.button} onPress={sendOTP} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>📩 ขอ OTP</Text>}
+        </TouchableOpacity>
+
+        {verificationId && (
+          <>
+            <View style={styles.inputContainer}>
+              <MaterialIcons name="vpn-key" size={24} color="gray" />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter OTP"
+                keyboardType="number-pad"
+                value={otpCode}
+                onChangeText={setOtpCode}
+              />
+            </View>
+
+            <TouchableOpacity style={styles.buttonVerify} onPress={verifyAndLink} disabled={loading}>
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>✅ ยืนยัน OTP และ Link</Text>}
+            </TouchableOpacity>
+          </>
+        )}
       </View>
-
-      <TouchableOpacity style={styles.button} onPress={sendOTP} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>📩 ขอ OTP</Text>}
-      </TouchableOpacity>
-
-      {verificationId && (
-        <>
-          <View style={styles.inputContainer}>
-            <MaterialIcons name="vpn-key" size={24} color="gray" />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter OTP"
-              keyboardType="number-pad"
-              value={otpCode}
-              onChangeText={setOtpCode}
-            />
-          </View>
-
-          <TouchableOpacity style={styles.buttonVerify} onPress={verifyAndLink} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>✅ ยืนยัน OTP และ Link</Text>}
-          </TouchableOpacity>
-        </>
-      )}
-    </View>
+    </ImageBackground>
   );
 };
 
-// ✅ ปรับปรุง UI/UX ด้วยสไตล์ที่ดีกว่า
-const styles = {
-  container: {
+const styles = StyleSheet.create({
+  background: {
     flex: 1,
+    width: "100%",
+    height: "100%",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f4f4f4",
-    paddingHorizontal: 20,
+  },
+  container: {
+    width: "90%",
+    padding: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.9)", // ทำให้เนื้อหาดูง่ายขึ้น
+    borderRadius: 15,
+    alignItems: "center",
+    elevation: 5, // เพิ่มเงาให้ UI ดูเด่นขึ้น
   },
   title: {
     fontSize: 24,
@@ -180,6 +206,6 @@ const styles = {
     fontSize: 18,
     fontWeight: "bold",
   },
-};
+});
 
 export default LinkPhoneScreen;
