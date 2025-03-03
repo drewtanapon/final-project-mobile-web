@@ -115,28 +115,10 @@
     .history ul {
       list-style-type: none;
       padding: 0;
-
-
-
-
-
-
-
-
-
-
-
     }
     .history li {
       padding: 10px;
       border-bottom: 1px solid #ddd;
-
-
-
-
-
-
-
     }
     /* Modal สำหรับ QR Code */
     #qr-modal {
@@ -234,10 +216,6 @@
     <div class="buttons">
       <button id="btn-qr">แสดง QR Code</button>
       <button id="btn-back" onclick="goBack()">กลับไปหน้าหลัก</button>
-
-      <!-- ปุ่มสำหรับเปิด/ปิดเช็คชื่อ -->
-      <button id="btn-open-checkin" class="checkin-btn">เปิดเช็คชื่อ</button>
-      <button id="btn-close-checkin" class="checkin-btn">ปิดเช็คชื่อ</button>
     </div>
   </div>
 
@@ -278,15 +256,19 @@
   <!-- Modal สำหรับเพิ่มการเช็คชื่อ -->
   <div id="checkin-modal" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5);">
     <div class="modal-content" style="background: #fff; margin: 100px auto; padding: 20px; width: 400px; border-radius: 8px; position: relative;">
-      <span class="close" id="close-checkin-modal" style="position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 18px;">×</span>
-      <h3>สร้างการเช็คชื่อใหม่</h3>
-      <form id="checkin-form-modal">
-        <div style="margin-bottom: 10px;">
-          <label>รหัสเช็คชื่อ:</label>
-          <input type="text" id="modal-checkin-code" required style="width: 100%; padding: 6px; box-sizing: border-box;">
-        </div>
-        <button type="submit" style="padding:8px 12px; background-color:#28a745; border:none; color:#fff; border-radius:4px; cursor:pointer;">บันทึก</button>
-      </form>
+        <span class="close" id="close-checkin-modal" style="position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 18px;">×</span>
+        <h3>สร้างการเช็คชื่อใหม่</h3>
+        <form id="checkin-form-modal">
+            <div style="margin-bottom: 10px;">
+                <label>รหัสเช็คชื่อ:</label>
+                <input type="text" id="checkin-code" required placeholder="เช่น ABC123" style="width: 100%; padding: 6px; box-sizing: border-box;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label>เวลาเริ่มคาบเรียน:</label>
+                <input type="datetime-local" id="class-start-time" required style="width: 100%; padding: 6px; box-sizing: border-box;">
+            </div>
+            <button type="submit" style="padding:8px 12px; background-color:#28a745; border:none; color:#fff; border-radius:4px; cursor:pointer;">บันทึก</button>
+        </form>
     </div>
   </div>
 
@@ -306,6 +288,7 @@
     // ตัวแปรเก็บ checkinCode ปัจจุบัน
     let currentCheckinCode = "";
 
+    //config firebase=======================================================================================================================================================================================
     const firebaseConfig = {
       apiKey: "AIzaSyAPOWp35o6ubJy0SE_PlAqimqa1-siXfVk",
       authDomain: "webmobileapplication-cdaaf.firebaseapp.com",
@@ -337,7 +320,7 @@
       }
     });
 
-    // ฟังก์ชันนำทาง
+    // ฟังก์ชันนำทาง===========================================================================================================================================================================================
     function toggleManage() {
       window.location.href = `manageClass.html?subjectId=${subjectId}`;
     }
@@ -351,7 +334,7 @@
       document.getElementById("qr-modal").style.display = "none";
     }
 
-    // เมื่อคลิกปุ่มแสดง QR Code
+    // เมื่อคลิกปุ่มแสดง QR Code================================================================================================================================================================================
     document.getElementById("btn-qr").addEventListener("click", function() {
       if (!subjectId) {
           alert("กรุณากรอก Subject ID ก่อน!");
@@ -380,104 +363,242 @@
       });
     });
 
-    // ปุ่มเพิ่มการเช็คชื่อ (แสดง modal)
+    // ปุ่มเปิด/ปิด modal เช็คชื่อ
     document.getElementById("btn-checkin").addEventListener("click", function(){
-      document.getElementById("checkin-modal").style.display = "block";
+        document.getElementById("checkin-modal").style.display = "block";
     });
 
-    // ปุ่มปิด modal เช็คชื่อ
-    document.getElementById("close-checkin-modal").addEventListener("click", function(){
-      document.getElementById("checkin-modal").style.display = "none";
+    document.getElementById("close-checkin-modal").addEventListener("click", function() {
+        document.getElementById("checkin-modal").style.display = "none";
     });
 
-    document.getElementById("btn-open-checkin").addEventListener("click", () => toggleCheckinStatus("open"));
-    document.getElementById("btn-close-checkin").addEventListener("click", () => toggleCheckinStatus("closed"));
-
-    function toggleCheckinStatus(status) {
-      if (!currentCheckinCode) {
-        alert("❌ ยังไม่มีการสร้างการเช็คชื่อ");
-        return;
+    // ฟังก์ชันเปิด/ปิดการเช็คชื่อ (เพิ่มการบันทึกคะแนนเมื่อปิด)
+    async function toggleCheckinStatus(checkinCode, currentStatus) {
+      if (!checkinCode) {
+          alert("❌ ยังไม่มีการสร้างการเช็คชื่อ");
+          return;
       }
 
       const checkinRef = db.collection("classroom")
-        .doc(subjectId)
-        .collection("checkin")
-        .doc(currentCheckinCode);
+          .doc(subjectId)
+          .collection("checkin")
+          .doc(checkinCode);
 
-      checkinRef.update({ status })
-        .then(() => {
-          alert(status === "open" ? "📌 เปิดเช็คชื่อแล้ว" : "📌 ปิดเช็คชื่อแล้ว");
-
-          if (status === "closed") {
-        markAbsentees();
-        setTimeout(updateStudentScores, 2000); // ✅ อัปเดตคะแนนหลังจากปิดเช็คชื่อ
+      const checkinSnap = await checkinRef.get();
+      if (!checkinSnap.exists) {
+          alert("❌ ไม่พบข้อมูลเช็คชื่อ");
+          return;
       }
-    })
-    .catch(error => console.error(`❌ Error toggling check-in status to ${status}:`, error));
-  }
 
+      const newStatus = currentStatus === 1 ? 2 : 1; // 1 (เปิด) → 2 (ปิด) และกลับกัน
+      await checkinRef.update({ status: newStatus });
 
-    // บันทึกการสร้างเช็คชื่อใหม่ (ใน modal)
-    document.getElementById("checkin-form-modal").addEventListener("submit", function(event) {
-      event.preventDefault();
-      const now = Date.now();
-      const checkinCode = document.getElementById("modal-checkin-code").value;
-      const lateTime = now + 1 * 60 * 1000; // +15 นาที
-      const closeTime = now + 2 * 60 * 1000; // +30 นาที
-      // สร้างเอกสาร checkin ใหม่ใน path:
-      // /users/{currentUserUID}/classroom/{subjectId}/checkin/{checkinCode}
-      db.collection("classroom")
-        .doc(subjectId)
-        .collection("checkin")
-        .doc(checkinCode)
-        .set({
-          checkinCode: checkinCode,
-          lateTime: lateTime,
-          closeTime: closeTime,
-          createdAt: Date.now()
-        })
-        .then(() => {
-          alert("สร้างการเช็คชื่อสำเร็จ!");
-          document.getElementById("checkin-modal").style.display = "none";
-          currentCheckinCode = checkinCode; // เก็บ checkinCode ปัจจุบัน
+      if (newStatus === 2) {
+          alert("📌 ปิดเช็คชื่อแล้ว กำลังอัปเดตคะแนน...");
+          await updateScores(checkinCode, checkinSnap.data()); // ส่งข้อมูลการเช็คชื่อไปคำนวณ
+      } else {
+          alert("✅ เปิดเช็คชื่อแล้ว");
+      }
 
-          // คัดลอกรายชื่อนักเรียนจาก collection "Student" ของวิชา
-          // ไปยัง subcollection "scores" ของเอกสาร checkin ที่สร้างขึ้น
-          db.collection("classroom")
+      loadCheck(); // โหลดข้อมูลใหม่เพื่ออัปเดต UI
+    }
+
+    // ฟังก์ชันอัปเดตสถานะปุ่มเปิด/ปิดเช็คชื่อ
+    function updateCheckinButtons(status) {
+        const openBtn = document.getElementById("btn-open-checkin");
+        const closeBtn = document.getElementById("btn-close-checkin");
+
+        if (status === 1) { // ✅ เปิดเช็คชื่อแล้ว
+            openBtn.style.display = "none"; // ซ่อนปุ่มเปิด
+            closeBtn.style.display = "inline-block"; // แสดงปุ่มปิด
+        } else { // ✅ ปิดเช็คชื่อแล้ว
+            openBtn.style.display = "inline-block"; // แสดงปุ่มเปิด
+            closeBtn.style.display = "none"; // ซ่อนปุ่มปิด
+        }
+    }
+
+    // โหลดสถานะปุ่มเช็คชื่อเมื่อเปิดหน้าเว็บ
+    async function loadCheckinStatus() {
+        if (!currentCheckinCode) return;
+
+        const checkinRef = db.collection("classroom")
             .doc(subjectId)
-            .collection("Student")
-            .get()
-            .then((studentSnapshot) => {
-              studentSnapshot.forEach((studentDoc) => {
-                const studentData = studentDoc.data();
-                db.collection("classroom")
+            .collection("checkin")
+            .doc(currentCheckinCode);
+
+        const checkinSnap = await checkinRef.get();
+        if (checkinSnap.exists()) {
+            updateCheckinButtons(checkinSnap.data().status);
+        }
+    }
+
+    // โหลดสถานะเช็คชื่อเมื่อหน้าเว็บโหลดเสร็จ
+    document.addEventListener("DOMContentLoaded", () => {
+        loadCheckinStatus();
+    });
+
+    // ฟังก์ชันสร้างการเช็คชื่อใหม่
+    document.getElementById("checkin-form-modal").addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      const checkinCode = document.getElementById("checkin-code").value.trim().toUpperCase();
+      const classStartTime = new Date(document.getElementById("class-start-time").value);
+
+      if (!checkinCode) {
+          alert("❌ กรุณากรอกรหัสเช็คชื่อ");
+          return;
+      }
+      if (isNaN(classStartTime)) {
+          alert("❌ กรุณาเลือกเวลาเริ่มคาบเรียน");
+          return;
+      }
+
+      // คำนวณเวลา Late และ Close ตาม Requirement
+      const lateTime = new Date(classStartTime.getTime() + 15 * 60 * 1000); // +15 นาที
+      const closeTime = new Date(classStartTime.getTime() + 30 * 60 * 1000); // +30 นาที
+
+      try {
+          // บันทึกข้อมูลไปยัง Firestore
+          await db.collection("classroom")
+              .doc(subjectId)
+              .collection("checkin")
+              .doc(checkinCode)
+              .set({
+                  checkinCode: checkinCode,
+                  classStartTime: classStartTime.toISOString(),
+                  checkinEndTime: closeTime.toISOString(),
+                  lateTime: lateTime.toISOString(),
+                  status: 0, // 0: ยังไม่เริ่ม
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+
+          alert(`✅ สร้างการเช็คชื่อสำเร็จ! รหัสเช็คชื่อ: ${checkinCode}`);
+          document.getElementById("checkin-modal").style.display = "none";
+          currentCheckinCode = checkinCode;
+
+          // คัดลอกรายชื่อนักเรียนไปยัง scores
+          const studentsSnap = await db.collection("classroom")
+              .doc(subjectId)
+              .collection("Student")
+              .get();
+
+          studentsSnap.forEach(async (studentDoc) => {
+              const studentData = studentDoc.data();
+              await db.collection("classroom")
                   .doc(subjectId)
                   .collection("checkin")
                   .doc(checkinCode)
                   .collection("scores")
-                  .doc(studentDoc.id)  // ใช้ ID เดียวกับนักเรียนใน "Student"
+                  .doc(studentDoc.id)
                   .set({
-                    status: 0, // เริ่มต้นสถานะเป็น 0 (ยังไม่เช็คชื่อ)
-                    studentName: studentData.name || "ไม่ระบุ",
-                    sid: studentData.sid || "-",
-                    score: 0   // คะแนนเริ่มต้น 0
-                  })
-                  .catch((error) => {
-                    console.error("❌ Error adding student to scores:", error);
+                      status: 0, // ยังไม่เช็คชื่อ
+                      studentName: studentData.name || "ไม่ระบุ",
+                      sid: studentData.sid || "-",
+                      score: 0
                   });
-              });
-            })
-            .catch((error) => {
-              console.error("❌ Error fetching students:", error);
-            });
-        })
-        .catch((error) => {
-          console.error("❌ Error creating check-in:", error);
-        });
+          });
+
+      } catch (error) {
+          console.error("❌ เกิดข้อผิดพลาดในการสร้างเช็คชื่อ:", error);
+      }
     });
 
-    let unsubscribeCheckin = null;
 
+    // ฟังก์ชันอัปเดตนักเรียนที่ขาดเรียน
+    async function markAbsentees() {
+        const checkinRef = collection(db, `classroom/${subjectId}/checkin/${currentCheckinCode}/scores`);
+        const studentsSnap = await getDocs(checkinRef);
+        const batch = db.batch();
+
+        studentsSnap.forEach((doc) => {
+            if (doc.data().status === 0) {
+                batch.update(doc.ref, { status: 3 }); // ขาดเรียน
+            }
+        });
+
+        await batch.commit();
+    }
+
+    // ฟังก์ชันอัปเดตคะแนนของนักเรียน
+    async function updateStudentScores() {
+      const studentScores = {};
+
+      const checkinDocs = await getDocs(collection(db, `classroom/${subjectId}/checkin`));
+      for (const checkinDoc of checkinDocs.docs) {
+          const checkinId = checkinDoc.id;
+          const scoresSnap = await getDocs(collection(db, `classroom/${subjectId}/checkin/${checkinId}/students`));
+
+          scoresSnap.forEach((doc) => {
+              const studentId = doc.id;
+              const status = doc.data().status || 0;
+              if (!studentScores[studentId]) studentScores[studentId] = 0;
+
+              if (status === 1) studentScores[studentId] += 1; // มาเรียนได้ 1 คะแนน
+              else if (status === 2) studentScores[studentId] += 0.5; // มาสายได้ 0.5 คะแนน
+          });
+      }
+
+      const batch = db.batch();
+      Object.entries(studentScores).forEach(([studentId, score]) => {
+          const studentRef = doc(db, `classroom/${subjectId}/Student/${studentId}`);
+          batch.update(studentRef, { totalScore: score });
+      });
+
+      await batch.commit();
+    }
+
+    // ฟังก์ชันตั้งเวลาให้ปิดเช็คชื่ออัตโนมัติ
+    function startAutoCloseTimer() {
+        if (checkinTimer) clearTimeout(checkinTimer);
+
+        checkinTimer = setTimeout(async () => {
+            const checkinRef = doc(db, `classroom/${subjectId}/checkin/${currentCheckinCode}`);
+            await updateDoc(checkinRef, { status: 2 }); // ปิดเช็คชื่อ
+            markAbsentees();
+            setTimeout(updateStudentScores, 2000);
+            alert("⏳ หมดเวลาเช็คชื่อแล้ว");
+        }, 30 * 60 * 1000); // 30 นาที
+    }
+
+    // ฟังก์ชันเช็คชื่อนักศึกษา
+    async function studentCheckIn(cid, cno, uid, stdid, name) {
+        const checkinRef = doc(db, `classroom/${cid}/checkin/${cno}`);
+        const checkinSnap = await getDoc(checkinRef);
+
+        if (!checkinSnap.exists()) {
+            alert("❌ ไม่พบข้อมูลการเช็คชื่อ");
+            return;
+        }
+
+        const checkinData = checkinSnap.data();
+        const checkinOpenTime = checkinData.checkinOpenTime.toMillis();
+        const checkinEndTime = checkinData.checkinEndTime;
+        const currentTime = Date.now();
+        const lateThreshold = checkinOpenTime + 15 * 60 * 1000;
+
+        let status = 0;
+
+        if (currentTime < checkinOpenTime) {
+            alert("❌ ยังไม่ถึงเวลาเช็คชื่อ");
+            return;
+        } else if (currentTime <= lateThreshold) {
+            status = 1;
+        } else if (currentTime <= checkinEndTime) {
+            status = 2;
+        } else {
+            alert("❌ หมดเวลาการเช็คชื่อ");
+            return;
+        }
+
+        await setDoc(doc(db, `classroom/${cid}/checkin/${cno}/students/${uid}`), {
+            stdid,
+            name,
+            date: new Date().toISOString(),
+            status
+        });
+
+        alert("✅ เช็คชื่อสำเร็จ! สถานะของคุณคือ " + (status === 1 ? "มาตรงเวลา" : "มาสาย"));
+    }
     // โหลดประวัติการเช็คชื่อ (สำหรับ modal แสดงรายละเอียด checkin)
     function loadCheck() {
       console.log("Loading check-in data...");
@@ -506,8 +627,20 @@
             const checkData = checkDoc.data();
             const li = document.createElement("li");
             li.style.marginBottom = "10px";
+
+            console.log("📌 checkinCode ที่ใช้สร้าง tbody:", checkData.checkinCode);
+            
             // ข้อความแสดงวันที่และรหัสเช็คชื่อ
-            li.textContent = `${new Date(checkData.startTime).toLocaleString()} - ${checkData.checkinCode}`;
+            let startTime = checkData.classStartTime;
+            if (startTime && startTime.toDate) {
+                startTime = startTime.toDate(); // กรณีเป็น Firestore Timestamp
+            } else if (typeof startTime === "string") {
+                startTime = new Date(startTime); // กรณีเก็บเป็น String
+            } else {
+                startTime = "ไม่ระบุ";
+            }
+
+            li.textContent = `${startTime !== "ไม่ระบุ" ? startTime.toLocaleString() : "ไม่ระบุเวลา"} - ${checkData.checkinCode}`;
             
             // สร้าง detailDiv สำหรับแสดงรายละเอียดรายชื่อนักเรียน
             const detailDiv = document.createElement("div");
@@ -540,20 +673,23 @@
             // สำหรับรายการแรก (ล่าสุด) ให้เพิ่มปุ่ม toggle เปิด/ปิดเช็คชื่อ
             if (first) {
               first = false;
-              currentCheckinCode = checkDoc.id; // เก็บ checkinCode ปัจจุบันไว้ global
-              
+              currentCheckinCode = checkDoc.id; // เก็บ checkinCode ล่าสุด
+
               const toggleBtn = document.createElement("button");
-              toggleBtn.id = "toggle-btn";
               toggleBtn.style.cssText = "margin-left:10px; padding:8px 12px; border:none; color:#fff; border-radius:4px; cursor:pointer;";
-              // ตรวจสอบสถานะของ checkin เพื่อกำหนดข้อความบนปุ่ม
-              if (checkData.status === "open") {
+
+              if (checkData.status === 1) {
                 toggleBtn.textContent = "ปิดเช็คชื่อ";
                 toggleBtn.style.backgroundColor = "#dc3545"; // สีแดง
               } else {
                 toggleBtn.textContent = "เปิดเช็คชื่อ";
                 toggleBtn.style.backgroundColor = "#28a745"; // สีเขียว
               }
-              toggleBtn.addEventListener("click", toggleCheckin);
+
+              toggleBtn.addEventListener("click", function () {
+                toggleCheckinStatus(currentCheckinCode, checkData.status);
+              });
+
               li.appendChild(toggleBtn);
             }
             
@@ -578,254 +714,130 @@
         });
     }
 
-
     // โหลดรายชื่อนักเรียนและสถานะจาก subcollection "Student" ใน check-in
     // (ส่วนนี้ยังคงเดิมสำหรับรายละเอียดประวัติการเช็คชื่อ)
-      function loadCheckinStudents(currentUserUID, subjectId, checkinCode, checkinCloseTime) {
-        if (!currentUserUID || !subjectId || !checkinCode) {
-          console.error("❌ ข้อมูลไม่ครบ: currentUserUID, subjectId หรือ checkinCode ไม่มีค่า");
-          return;
-        }
-        const tbody = document.getElementById(`studentTableBody-${checkinCode}`);
-        tbody.innerHTML = "<tr><td colspan='7'>กำลังโหลดข้อมูล...</td></tr>";
-        // 1) โหลดนักเรียนจาก collection "Student" (ในระบบของคุณ)
-        db.collection("classroom")
-          .doc(subjectId)
-          .collection("Student")
-          .get()
-          .then((studentQuery) => {
-            const students = {};
-            studentQuery.forEach((doc) => {
-              let studentData = doc.data();
-              // สมมุติว่าเราตรวจสอบว่า นักเรียนลงทะเบียนวิชานี้แล้ว
-              // (ในที่นี้คุณอาจมีการตรวจสอบเพิ่มเติมตามโครงสร้าง DB ของคุณ)
-              students[doc.id] = {
-                sid: studentData.sid || "-",
-                name: studentData.name || "-",
-                status: "-",
-                date: "-",
-                time: "-",
-                remake: "-",
-              };
-            });
-            // 2) โหลดสถานะจาก subcollection "Student" ใน check-in (ถ้ามี)
-            db.collection("classroom")
-              .doc(subjectId)
-              .collection("checkin")
-              .doc(checkinCode)
-              .collection("scores")
-              .get()
-              .then((checkinQuery) => {
-                checkinQuery.forEach((doc) => {
-                  if (students[doc.id]) {
-                    students[doc.id].status = doc.data().status || 0;
-                    students[doc.id].date = doc.data().date || "-";
-                    students[doc.id].time = doc.data().time || "-";
-                    students[doc.id].remake = doc.data().remake || "-";
-                  }
-                });
-                tbody.innerHTML = "";
-                let index = 1;
-                for (const studentId in students) {
-                  const st = students[studentId];
-                  let displayStatus = st.status;
-                  if (st.status === 0) {
-                    if (Date.now() < checkinCloseTime) {
-                      displayStatus = "ยังไม่เช็คชื่อ";  // กรณียังเปิดเช็คชื่อ
-                    } else {
-                      displayStatus = "ขาดเรียน"; // ปิดเช็คชื่อแล้ว
-                    }
-                  } else if (st.status === 1) {
-                    displayStatus = "มาเรียน";
-                  } else if (st.status === 2) {
-                    displayStatus = "สาย";
-                  } else if (st.status === 3) {
-                    displayStatus = "ขาดเรียน"; // กรณีที่ระบบบันทึกให้
-                  }
-                  isplayStatus = "สาย";
-                  const tr = document.createElement("tr");
-                  tr.innerHTML = `
-                    <td style="border: 1px solid #ddd; padding: 8px;">${index++}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">${st.sid}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">${st.name}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">${displayStatus}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">${st.date}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">${st.time}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">${st.remake}</td>
-                  `;
-                  tbody.appendChild(tr);
-                }
-              })
-              .catch((error) => {
-                console.error("❌ Error loading checkin status:", error);
-              });
-          })
-          .catch((error) => {
-            console.error("❌ Error loading students:", error);
-          });
-      }
-
-    // กำหนดตัวแปร global สำหรับ timer
-    let checkinTimer = null;
-
-    // ฟังก์ชัน toggleCheckin สำหรับเปิด/ปิดเช็คชื่อ (ในรายการเช็คชื่อล่าสุด)
-    function toggleCheckin() {
-      if (!currentCheckinCode) {
-        alert("ยังไม่มีการสร้างการเช็คชื่อ");
+    function loadCheckinStudents(currentUserUID, subjectId, checkinCode, checkinCloseTime) {
+    if (!currentUserUID || !subjectId || !checkinCode) {
+        console.error("❌ ข้อมูลไม่ครบ: currentUserUID, subjectId หรือ checkinCode ไม่มีค่า");
         return;
-      }
-      const checkinDocRef = db.collection("classroom")
-            .doc(subjectId)
-            .collection("checkin")
-            .doc(currentCheckinCode);
-      
-      checkinDocRef.get().then((doc) => {
-        if (doc.exists) {
-          const currentStatus = doc.data().status; // คาดว่าเก็บเป็น string "open" หรือ "closed"
-          if (currentStatus === "open") {
-            // ปิดการเช็คชื่อ
-            checkinDocRef.update({ status: "closed" })
-              .then(() => {
-                alert("ปิดเช็คชื่อแล้ว");
-                // เคลียร์ timer หากมีอยู่
-                if (checkinTimer) {
-                  clearTimeout(checkinTimer);
-                  checkinTimer = null;
-                }
-                updateToggleButtonText("closed");
-              })
-              .catch((error) => {
-                console.error("❌ Error closing check-in:", error);
-              });
-          } else {
-            // เปิดการเช็คชื่อ พร้อมบันทึกเวลาเปิด
-            checkinDocRef.update({ status: "open", openTimestamp: Date.now() })
-              .then(() => {
-                alert("เปิดเช็คชื่อแล้ว");
-                // เริ่ม timer 30 นาที (30*60*1000 ms)
-                checkinTimer = setTimeout(() => {
-                  // เมื่อครบ 30 นาที ให้อัปเดตสถานะของนักเรียนที่ยังไม่ได้เช็ค (status = 0) ให้เป็น 2 (สาย)
-                  db.collection("classroom")
-                    .doc(subjectId)
-                    .collection("checkin")
-                    .doc(currentCheckinCode)
-                    .collection("scores")
-                    .get()
-                    .then((snapshot) => {
-                      snapshot.forEach((doc) => {
-                        if (doc.data().status === 0) {
-                          doc.ref.update({ status: 2 });
-                        }
-                      });
-                      alert("ครบเวลา 30 นาที: นักเรียนที่ยังไม่ได้เช็คถูกระบุว่า 'สาย'");
-                    })
-                    .catch((error) => {
-                      console.error("❌ Error updating late status:", error);
-                    });
-                }, 30 * 60 * 1000);
-                updateToggleButtonText("open");
-              });
-          }
-        }
-      });
-    }
-    function markAbsentees() {
-      const checkinRef = db.collection("classroom")
-        .doc(subjectId)
-        .collection("checkin")
-        .doc(currentCheckinCode)
-        .collection("scores");
-
-      checkinRef.get().then((snapshot) => {
-        const batch = db.batch();
-        snapshot.forEach((doc) => {
-          if (doc.data().status === 0) { // 🔥 เปลี่ยนเฉพาะคนที่ยังไม่เช็คชื่อ
-            batch.update(doc.ref, { status: 3 }); // 3 = ขาดเรียน
-          }
-        });
-
-        return batch.commit();
-      }).then(() => {
-        console.log("✅ อัปเดตนักเรียนที่ขาดเรียนเรียบร้อย");
-
-        // ✅ อัปเดตคะแนนรวมหลังจากปิดเช็คชื่อ
-        updateStudentScores();
-      });
     }
 
-    function updateStudentScores() {
-      console.log("🔄 กำลังอัปเดตคะแนนนักเรียน...");
+    const tbody = document.getElementById(`studentTableBody-${checkinCode}`);
+    if (!tbody) {
+        console.error(`❌ ไม่พบ tbody ใน DOM สำหรับ checkinCode: ${checkinCode}`);
+        return;
+    }
 
-      const studentScores = {}; // เก็บคะแนนรวมของแต่ละนักเรียน
+    tbody.innerHTML = "<tr><td colspan='7'>กำลังโหลดข้อมูล...</td></tr>";
 
-      db.collection("classroom")
+    // ✅ โหลดเฉพาะนักเรียนที่อยู่ใน collection "students" ภายใต้ "checkin"
+    db.collection("classroom")
         .doc(subjectId)
         .collection("checkin")
+        .doc(checkinCode)
+        .collection("students")
         .get()
-        .then((checkinSnapshot) => {
-          if (checkinSnapshot.empty) {
-            console.log("❌ ไม่มีรายการเช็คชื่อ");
-            return;
-          }
+        .then((querySnapshot) => {
+            if (querySnapshot.empty) {
+                tbody.innerHTML = "<tr><td colspan='7'>ไม่มีข้อมูลนักเรียน</td></tr>";
+                return;
+            }
 
-          const checkinDocs = checkinSnapshot.docs.map(doc => doc.id);
-          console.log("📌 รายการเช็คชื่อที่พบ:", checkinDocs); // ✅ เช็คว่ามี check-in ใดบ้า
-          const scorePromises = checkinDocs.map(checkinId =>
-            db.collection("classroom")
-              .doc(subjectId)
-              .collection("checkin")
-              .doc(checkinId)
-              .collection("scores")
-              .get()
-          );
+            tbody.innerHTML = "";
+            let index = 1;
+            querySnapshot.forEach((doc) => {
+                const studentData = doc.data();
 
-          return Promise.all(scorePromises);
-        })
-        .then((allScoresSnapshots) => {
-          allScoresSnapshots.forEach((snapshot) => {
-            snapshot.forEach((doc) => {
-              const studentId = doc.id;
-              const status = doc.data().status || 0;
+                let displayStatus = "-";
+                if (studentData.status === 1) {
+                    displayStatus = "มาเรียน";
+                } else if (studentData.status === 2) {
+                    displayStatus = "สาย";
+                } else {
+                    // ตรวจสอบว่าหมดเวลาเช็คชื่อหรือยัง
+                    if (new Date() < new Date(checkinCloseTime)) {
+                        displayStatus = "ยังไม่เช็คชื่อ";
+                    } else {
+                        displayStatus = "ขาดเรียน";
+                    }
+                }
 
-              if (!studentScores[studentId]) {
-                studentScores[studentId] = 0;
-              }
-
-              if (status === 1) {
-                studentScores[studentId] += 1; // มาเรียนได้ 1 คะแนน
-              } else if (status === 2) {
-                studentScores[studentId] += 0.5; // สายได้ 0.5 คะแนน
-              } else if (status === 3) {
-                studentScores[studentId] += 0; // ขาดเรียนไม่ได้คะแนน
-              }
-
-              console.log(`📌 คะแนนของ ${studentId}: ${studentScores[studentId]}`);
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td style="border: 1px solid #ddd; padding: 8px;">${index++}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${studentData.studentId || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${studentData.username || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${displayStatus}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${studentData.date || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${studentData.time || "-"}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${studentData.remark || "-"}</td>
+                `;
+                tbody.appendChild(tr);
             });
-          });
-
-          console.log("✅ คะแนนรวม:", studentScores);
-
-          const batch = db.batch();
-          Object.entries(studentScores).forEach(([studentId, score]) => {
-            const studentRef = db.collection("classroom")
-              .doc(subjectId)
-              .collection("Student")
-              .doc(studentId);
-
-            batch.update(studentRef, { totalScore: score }, { merge: true });
-          });
-
-          return batch.commit();
-        })
-        .then(() => {
-          console.log("✅ อัปเดตคะแนนรวมเสร็จสิ้น!");
-          loadStudentScores(); // โหลดคะแนนใหม่มาแสดง
         })
         .catch((error) => {
-          console.error("❌ Error updating student scores:", error);
+            console.error("❌ โหลดรายชื่อนักศึกษาไม่สำเร็จ:", error);
         });
+  }
+  async function updateScores(checkinCode, checkinData) {
+    const studentsRef = db.collection("classroom")
+        .doc(subjectId)
+        .collection("checkin")
+        .doc(checkinCode)
+        .collection("students");
+
+    const studentsSnap = await studentsRef.get();
+    if (studentsSnap.empty) {
+        console.log("⚠️ ไม่มีข้อมูลนักเรียนในการเช็คชื่อครั้งนี้");
+        return;
     }
 
+    // ดึงเวลาสำคัญจาก checkinData
+    const classStartTime = new Date(checkinData.classStartTime).getTime(); // เวลาเริ่มคาบเรียน
+    const lateTime = new Date(checkinData.lateTime).getTime(); // เวลาสาย
+    const checkinEndTime = new Date(checkinData.checkinEndTime).getTime(); // เวลาสิ้นสุดเช็คชื่อ
+
+    const batch = db.batch();
+
+    studentsSnap.forEach((doc) => {
+        const studentData = doc.data();
+        const studentId = doc.id;
+        let score = 0;
+
+        if (studentData.time) {
+            const checkinTimeParts = studentData.time.split(":");
+            const checkinTime = new Date(checkinData.classStartTime); 
+            checkinTime.setHours(parseInt(checkinTimeParts[0]), parseInt(checkinTimeParts[1]), 0);
+            const checkinTimestamp = checkinTime.getTime();
+
+            // ✅ ตรวจสอบเวลาที่นักเรียนเช็คชื่อ
+            if (checkinTimestamp < lateTime) {
+                score = 1; // ✅ มาเรียนตรงเวลา ได้ 1 คะแนน
+            } else if (checkinTimestamp >= lateTime && checkinTimestamp <= checkinEndTime) {
+                score = 0.5; // ⏳ มาสาย ได้ 0.5 คะแนน
+            } else {
+                score = 0; // ❌ เช็คชื่อหลังปิด หรือไม่มีเวลาเช็คชื่อ
+            }
+        } else {
+            score = 0; // ❌ ไม่มีข้อมูลการเช็คชื่อ = ขาดเรียน
+        }
+
+        // อัปเดตคะแนนใน `scores`
+        const studentScoreRef = db.collection("classroom")
+            .doc(subjectId)
+            .collection("scores")
+            .doc(studentId);
+
+        batch.set(studentScoreRef, {
+            studentName: studentData.username || "ไม่ระบุ",
+            sid: studentData.studentId || "-",
+            score: firebase.firestore.FieldValue.increment(score) // ✅ เพิ่มคะแนนสะสม
+        }, { merge: true });
+    });
+
+    await batch.commit();
+    alert("✅ อัปเดตคะแนนเรียบร้อยแล้ว!");
+}
   </script>
 </body>
 </html>
