@@ -230,9 +230,9 @@ const styles = StyleSheet.create({
   },
   classItem: {
     backgroundColor: "#F8F8FF",
-    padding: 25,
+    padding: 180,
     marginVertical: 15,
-    borderRadius: 15,
+    borderRadius: 10,
     width: "100%",
     alignItems: "center",
     alignSelf: "center",
