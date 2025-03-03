@@ -32,6 +32,7 @@ const ClassDetail = ({ navigation, route }) => {
   const [questionText, setQuestionText] = useState("");
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(true);
+  const [courseCode, setCourseCode] = useState("");
 
   const uid = auth.currentUser?.uid;
 
@@ -85,6 +86,7 @@ const ClassDetail = ({ navigation, route }) => {
       const classSnap = await getDoc(classRef);
       if (classSnap.exists()) {
         setCourseName(classSnap.data().info?.name || "ไม่ระบุชื่อวิชา");
+        setCourseCode(classSnap.data().info?.code || "ไม่ระบุรหัสวิชา")
       } else {
         Alert.alert("⚠️ ไม่พบข้อมูลวิชา");
       }
@@ -169,7 +171,7 @@ const ClassDetail = ({ navigation, route }) => {
         ) : (
           <>
             <Text style={styles.title}>เข้าห้องเรียน</Text>
-            <Text style={styles.courseText}>📚 รหัสวิชา: {cid}</Text>
+            <Text style={styles.courseText}>📚 รหัสวิชา: {courseCode}</Text>
             <Text style={styles.courseText}>📖 ชื่อวิชา: {courseName}</Text>
 
             <Text style={styles.label}>📌 หมายเหตุ</Text>
