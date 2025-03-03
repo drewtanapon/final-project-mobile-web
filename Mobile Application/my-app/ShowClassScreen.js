@@ -1,47 +1,66 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator, StyleSheet, Image } from "react-native";
-import { auth, db, collection, doc, getDocs, getDoc, updateDoc, setDoc , createCheckin} from "./firebaseConfig";
+import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator, StyleSheet, Image, TextInput } from "react-native";
+import { auth, db, collection, doc, getDocs, getDoc, setDoc } from "./firebaseConfig";
 import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 const ShowClassScreen = ({ navigation }) => {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [studentId, setStudentId] = useState("");
+  const [isCheckinOpen, setIsCheckinOpen] = useState(false);
 
   const fetchClasses = async () => {
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        Alert.alert("⚠️ กรุณาเข้าสู่ระบบใหม่");
-        navigation.replace("Login");
-        return;
-      }
-      setStudentId(user.uid);
-      const studentRef = doc(db, "Student", user.uid);
-      const subjectListRef = collection(studentRef, "subjectList");
-      const querySnapshot = await getDocs(subjectListRef);
+        const user = auth.currentUser;
+        if (!user) {
+            Alert.alert("⚠️ กรุณาเข้าสู่ระบบใหม่");
+            navigation.replace("Login");
+            return;
+        }
+        
+        setStudentId(user.uid);
+        const studentRef = doc(db, "Student", user.uid);
+        const subjectListRef = collection(studentRef, "subjectList");
+        const querySnapshot = await getDocs(subjectListRef);
 
-      
+        if (querySnapshot.empty) {
+            setClasses([]);
+            return;
+        }
 
-      if (!querySnapshot.empty) {
-        const subjects = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setClasses(subjects);
-      } else {
-        setClasses([]);
-      }
+        // 1️⃣ ดึงรายการ classId ของวิชาที่นักเรียนเข้าร่วม
+        const classIds = querySnapshot.docs.map(doc => doc.id);
+
+        // 2️⃣ ดึงข้อมูลวิชาจาก classroom ตาม classIds
+        const classPromises = classIds.map(async (classId) => {
+            const classRef = doc(db, "classroom", classId);
+            const classSnap = await getDoc(classRef);
+            
+            if (classSnap.exists()) {
+                return { id: classId, ...classSnap.data().info }; // ✅ ดึง info ที่มี code และ room
+            }
+            return null;
+        });
+
+        // 3️⃣ รวบรวมข้อมูลวิชา
+        const classData = (await Promise.all(classPromises)).filter(Boolean);
+        setClasses(classData);
+
     } catch (error) {
-      Alert.alert("❌ ข้อผิดพลาด", error.message);
+        Alert.alert("❌ ข้อผิดพลาด", error.message);
     }
     setLoading(false);
-  };
+};
+
 
 
   useEffect(() => {
     fetchClasses();
-    const unsubscribe = navigation.addListener("focus", fetchClasses);
+    checkCheckinStatus();
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchClasses();
+      checkCheckinStatus();
+    });
     return unsubscribe;
   }, [navigation]);
 
@@ -53,66 +72,121 @@ const ShowClassScreen = ({ navigation }) => {
             return;
         }
 
-        // ✅ ดึงข้อมูลของนักเรียนจาก Firestore ตาม UID
-        const studentRef = doc(db, "Student", user.uid);
-        const studentSnap = await getDoc(studentRef);
+        // ✅ ขอให้ผู้ใช้กรอกรหัสเช็คชื่อ (Check-in Code)
+        Alert.prompt(
+            "กรอกรหัสเช็คชื่อ",
+            "โปรดกรอกรหัสที่อาจารย์ให้มาก่อนกดเช็คชื่อ",
+            [
+                {
+                    text: "ยกเลิก",
+                    style: "cancel",
+                },
+                {
+                    text: "ตกลง",
+                    onPress: async (inputCode) => {
+                        if (!inputCode) {
+                            Alert.alert("⚠️ กรุณากรอกรหัสเช็คชื่อ");
+                            return;
+                        }
 
-        if (!studentSnap.exists()) {
-            Alert.alert("❌ ไม่พบข้อมูลนักเรียน");
-            return;
-        }
+                        console.log("📌 Check-in Code ที่นักเรียนกรอก:", inputCode);
 
-        const studentData = studentSnap.data();
-        const sid = studentData.studentId || "N/A";  // ✅ ดึงค่า studentId อัตโนมัติ
-        const username = studentData.username || "ไม่มีชื่อ";  // ✅ ดึงชื่ออัตโนมัติ
+                        // ✅ ดึงข้อมูลนักเรียนจาก Firestore
+                        const studentRef = doc(db, "Student", user.uid);
+                        const studentSnap = await getDoc(studentRef);
 
-        // ✅ ดึงเวลาปัจจุบันของนักเรียน
-        const now = new Date();
-        const dateStr = now.toISOString().split("T")[0]; // YYYY-MM-DD
-        const timeStr = now.toLocaleTimeString("en-GB", { hour12: false }); // HH:mm:ss
-        const timestamp = now.getTime(); // ✅ แปลงเป็น timestamp (milliseconds)
+                        if (!studentSnap.exists()) {
+                            Alert.alert("❌ ไม่พบข้อมูลนักเรียน");
+                            return;
+                        }
 
-        console.log("📌 เวลาที่ส่งไป Firestore:", dateStr, timeStr, timestamp);
+                        const studentData = studentSnap.data();
+                        const sid = studentData.studentId || "N/A";
+                        const username = studentData.username || "ไม่มีชื่อ";
 
-        // ✅ โหลด checkin ที่กำลังเปิดอยู่
-        const checkInRef = collection(db, "classroom", classId, "checkin");
-        const checkinCollec = await getDocs(checkInRef);
+                        // ✅ โหลด checkin ที่เปิดอยู่ และตรวจสอบรหัส
+                        const checkInRef = collection(db, "classroom", classId, "checkin");
+                        const checkinCollec = await getDocs(checkInRef);
 
-        if (checkinCollec.empty) {
-            Alert.alert("❌ ไม่มีข้อมูลการเช็คชื่อ");
-            return;
-        }
+                        if (checkinCollec.empty) {
+                            Alert.alert("❌ ไม่มีข้อมูลการเช็คชื่อ");
+                            return;
+                        }
 
-        for (const docSnap of checkinCollec.docs) {
-            const docData = docSnap.data();
+                        let checkinMatched = false;
 
-            if (docData.status === 1) { // ✅ เฉพาะ checkin ที่เปิดอยู่
-                const studentDocRef = doc(
-                    db,
-                    "classroom", classId,
-                    "checkin", docSnap.id,
-                    "students", user.uid
-                );
+                        for (const docSnap of checkinCollec.docs) {
+                            const docData = docSnap.data();
 
-                await setDoc(studentDocRef, {
-                    studentId: sid, // ✅ ไม่ fix ค่า
-                    username: username, // ✅ ไม่ fix ค่า
-                    date: dateStr,
-                    time: timeStr,
-                    timestamp: timestamp, // ✅ ส่ง timestamp ไปด้วย
-                    remark: remark || "ไม่มีหมายเหตุ"
-                }, { merge: true });
+                            if (docData.status === 1 && docData.checkinCode === inputCode) {
+                                checkinMatched = true;
 
-                console.log("✅ เช็คชื่อสำเร็จสำหรับ", user.uid);
-                Alert.alert("✔️ เช็คชื่อสำเร็จ!");
-            }
-        }
+                                const now = new Date();
+                                const dateStr = now.toISOString().split("T")[0];
+                                const timeStr = now.toLocaleTimeString("en-GB", { hour12: false });
+                                const timestamp = now.getTime();
+
+                                console.log("📌 เวลาที่ส่งไป Firestore:", dateStr, timeStr, timestamp);
+
+                                // ✅ บันทึกข้อมูลลง Firestore
+                                const studentDocRef = doc(
+                                    db,
+                                    "classroom", classId,
+                                    "checkin", docSnap.id,
+                                    "students", user.uid
+                                );
+
+                                await setDoc(studentDocRef, {
+                                    studentId: sid,
+                                    username: username,
+                                    date: dateStr,
+                                    time: timeStr,
+                                    timestamp: timestamp,
+                                    remark: remark || "ไม่มีหมายเหตุ",
+                                }, { merge: true });
+
+                                console.log("✅ เช็คชื่อสำเร็จสำหรับ", user.uid);
+                                Alert.alert("✔️ เช็คชื่อสำเร็จ!");
+                                break; // หยุด loop ทันทีหลังจากเช็คชื่อสำเร็จ
+                            }
+                        }
+
+                        if (!checkinMatched) {
+                            Alert.alert("❌ รหัสเช็คชื่อไม่ถูกต้อง หรือเช็คชื่อปิดแล้ว");
+                        }
+                    },
+                },
+            ],
+            "plain-text"
+        );
     } catch (error) {
         console.error("❌ เกิดข้อผิดพลาด:", error);
         Alert.alert("❌ ข้อผิดพลาด", error.message);
     }
 };
-  
+
+const checkCheckinStatus = async () => {
+  try {
+    const classId = "your_class_id_here"; // ⚠️ ต้องเปลี่ยนเป็น classId จริง ๆ
+    const checkInRef = collection(db, "classroom", classId, "checkin");
+    const checkinCollec = await getDocs(checkInRef);
+
+    let checkinOpen = false;
+
+    checkinCollec.forEach((docSnap) => {
+      const docData = docSnap.data();
+      if (docData.status === 1) {
+        checkinOpen = true;
+      }
+    });
+
+    setIsCheckinOpen(checkinOpen);
+  } catch (error) {
+    console.error("❌ ตรวจสอบสถานะเช็คชื่อผิดพลาด:", error);
+  }
+};
+
+
   const handleAttendance = (classId) => {
     Alert.prompt(
       "กรอกหมายเหตุ",
@@ -136,22 +210,21 @@ const ShowClassScreen = ({ navigation }) => {
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : classes.length > 0 ? (
-        <FlatList
-          data={classes}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.classItem}>
-              <Image source={{ uri: item.photo }} style={styles.classImage} />
-              <Text style={styles.classText}>📖 {item.name} ({item.code})</Text>
-              <Text style={styles.roomText}>📍 ห้อง: {item.room || "ไม่ระบุ"}</Text>
-              <TouchableOpacity
+<FlatList
+    data={classes}
+    keyExtractor={(item) => item.id}
+    renderItem={({ item }) => (
+        <View style={styles.classItem}>
+            <Text style={styles.classText}>📖 {item.name} ({item.code})</Text>
+            <Text style={styles.roomText}>📍 ห้อง: {item.room || "ไม่ระบุ"}</Text>
+            <TouchableOpacity
                 style={styles.attendanceButton}
                 onPress={() => handleAttendance(item.id)}
-              >
+            >
                 <Text style={styles.buttonText}>✔️ เช็คชื่อเข้าเรียน</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.attendanceButton}
+                style={styles.attendanceButton}x  
                 onPress={() => {
                   if (item.id) {
                     
