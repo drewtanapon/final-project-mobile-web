@@ -7,7 +7,9 @@ import {
   onAuthStateChanged,
   signInWithPhoneNumber,
   PhoneAuthProvider,
-  signInWithCredential
+  signInWithCredential,
+  createCheckin,
+  addDoc,
 } from "firebase/auth";
 import { 
   getFirestore, 
@@ -17,7 +19,8 @@ import {
   collection,
   query,
   where,
-  getDocs
+  getDocs,
+
 } from "firebase/firestore";
 //import { getFirestore, doc, setDoc ,getDoc ,getDocs} from "firebase/firestore";
 import { ref } from "firebase/storage";
@@ -54,5 +57,7 @@ export {
   collection,
   query,
   where,
-  getDocs
+  getDocs,
+  createCheckin,
+  addDoc
 };
