@@ -6,7 +6,9 @@ import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 const ShowClassScreen = ({ navigation }) => {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [studentId, setStudentId] = useState("");
 
+  
   useEffect(() => {
     const fetchClasses = async () => {
       try {
@@ -16,7 +18,7 @@ const ShowClassScreen = ({ navigation }) => {
           navigation.replace("Login");
           return;
         }
-
+        setStudentId(user.uid);
         const studentRef = doc(db, "Student", user.uid);
         const subjectListRef = collection(studentRef, "subjectList");
         const querySnapshot = await getDocs(subjectListRef);
@@ -49,8 +51,22 @@ const ShowClassScreen = ({ navigation }) => {
         return;
       }
   
-      console.log("📌 เริ่มเช็คชื่อสำหรับ classId:", classId);
+      console.log("📌 เริ่มเช็คชื่อสำหรับ classId:", classId, "id:", studentId);
   
+      // ดึงข้อมูลนักเรียน
+      const studentRef = doc(db, "Student", studentId);
+      const studentSnap = await getDoc(studentRef);
+  
+      if (!studentSnap.exists()) {
+        Alert.alert("❌ ไม่พบข้อมูลนักเรียน");
+        return;
+      }
+  
+      const studentData = studentSnap.data();
+      const sid = studentData.studentId || "N/A"; // ใช้ค่าเริ่มต้นหากไม่มีข้อมูล
+      const username = studentData.username || "ไม่มีชื่อ";
+  
+      // ค้นหา checkin ที่เปิดอยู่
       const checkInRef = collection(db, "classroom", classId, "checkin");
       const checkinCollec = await getDocs(checkInRef);
   
@@ -71,9 +87,9 @@ const ShowClassScreen = ({ navigation }) => {
           try {
             await setDoc(scoresDocRef, {
               score: 1,
-              sid: "test",
+              sid: sid,
               status: 1,
-              studentName: user.displayName || "ไม่มีชื่อ",
+              studentName: username,
             }, { merge: true });
   
             console.log("✅ เช็คชื่อสำเร็จสำหรับ", user.uid);
@@ -89,6 +105,7 @@ const ShowClassScreen = ({ navigation }) => {
       Alert.alert("❌ ข้อผิดพลาด", error.message);
     }
   };
+  
   
   
   
