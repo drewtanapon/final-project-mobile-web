@@ -1,7 +1,28 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator, StyleSheet, Image } from "react-native";
-import { auth, db, collection, doc, getDocs, getDoc, updateDoc, setDoc , createCheckin} from "./firebaseConfig";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  StyleSheet,
+  Image,
+  Dimensions,
+  ImageBackground,
+} from "react-native";
+import {
+  auth,
+  db,
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  updateDoc,
+  setDoc,
+} from "./firebaseConfig";
+
+const { width, height } = Dimensions.get("window");
 
 const ShowClassScreen = ({ navigation }) => {
   const [classes, setClasses] = useState([]);
@@ -17,16 +38,16 @@ const ShowClassScreen = ({ navigation }) => {
         return;
       }
       setStudentId(user.uid);
+
+      // ดึงรายวิชาจาก Student/{uid}/subjectList
       const studentRef = doc(db, "Student", user.uid);
       const subjectListRef = collection(studentRef, "subjectList");
       const querySnapshot = await getDocs(subjectListRef);
 
-      
-
       if (!querySnapshot.empty) {
-        const subjects = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+        const subjects = querySnapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
         }));
         setClasses(subjects);
       } else {
@@ -38,13 +59,13 @@ const ShowClassScreen = ({ navigation }) => {
     setLoading(false);
   };
 
-
   useEffect(() => {
     fetchClasses();
     const unsubscribe = navigation.addListener("focus", fetchClasses);
     return unsubscribe;
   }, [navigation]);
 
+  // ฟังก์ชันเช็คชื่อ
   const markAttendance = async (classId, remark) => {
     try {
       const user = auth.currentUser;
@@ -54,9 +75,9 @@ const ShowClassScreen = ({ navigation }) => {
       }
 
       console.log("📌 เริ่มเช็คชื่อสำหรับ classId:", classId, "id:", studentId);
+
       const studentRef = doc(db, "Student", studentId);
       const studentSnap = await getDoc(studentRef);
-
       if (!studentSnap.exists()) {
         Alert.alert("❌ ไม่พบข้อมูลนักเรียน");
         return;
@@ -66,6 +87,7 @@ const ShowClassScreen = ({ navigation }) => {
       const sid = studentData.studentId || "N/A";
       const username = studentData.username || "ไม่มีชื่อ";
 
+      // ค้นหา checkin ที่ status = "open"
       const checkInRef = collection(db, "classroom", classId, "checkin");
       const checkinCollec = await getDocs(checkInRef);
 
@@ -79,16 +101,29 @@ const ShowClassScreen = ({ navigation }) => {
         console.log("🔍 เจอ checkin:", docSnap.id, "status:", docData.status);
 
         if (docData.status === "open") {
-          const scoresDocRef = doc(db, "classroom", classId, "checkin", docSnap.id, "scores", user.uid);
+          // บันทึกคะแนน/สถานะใน subcollection scores
+          const scoresDocRef = doc(
+            db,
+            "classroom",
+            classId,
+            "checkin",
+            docSnap.id,
+            "scores",
+            user.uid
+          );
           console.log("📌 กำลังบันทึกข้อมูล scores:", user.uid);
 
-          await setDoc(scoresDocRef, {
-            score: 1,
-            sid: sid,
-            status: 1,
-            studentName: username,
-            remark: remark // เพิ่มหมายเหตุ
-          }, { merge: true });
+          await setDoc(
+            scoresDocRef,
+            {
+              score: 1,
+              sid: sid,
+              status: 1,
+              studentName: username,
+              remark: remark, // บันทึกหมายเหตุ
+            },
+            { merge: true }
+          );
 
           console.log("✅ เช็คชื่อสำเร็จสำหรับ", user.uid);
           Alert.alert("✔️ เช็คชื่อสำเร็จ!");
@@ -99,7 +134,8 @@ const ShowClassScreen = ({ navigation }) => {
       Alert.alert("❌ ข้อผิดพลาด", error.message);
     }
   };
-  
+
+  // ฟังก์ชัน prompt ให้กรอกหมายเหตุ
   const handleAttendance = (classId) => {
     Alert.prompt(
       "กรอกหมายเหตุ",
@@ -107,102 +143,119 @@ const ShowClassScreen = ({ navigation }) => {
       [
         {
           text: "ยกเลิก",
-          style: "cancel"
+          style: "cancel",
         },
         {
           text: "ตกลง",
-          onPress: (remark) => markAttendance(classId, remark || "ไม่มีหมายเหตุ")
-        }
+          onPress: (remark) => markAttendance(classId, remark || "ไม่มีหมายเหตุ"),
+        },
       ],
       "plain-text"
     );
   };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>📚 รายวิชาที่เรียน</Text>
-      {loading ? (
-        <ActivityIndicator size="large" color="#007bff" />
-      ) : classes.length > 0 ? (
-        <FlatList
-          data={classes}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.classItem}>
-              <Image source={{ uri: item.photo }} style={styles.classImage} />
-              <Text style={styles.classText}>📖 {item.name} ({item.code})</Text>
-              <Text style={styles.roomText}>📍 ห้อง: {item.room || "ไม่ระบุ"}</Text>
-              <TouchableOpacity
-                style={styles.attendanceButton}
-                onPress={() => handleAttendance(item.id)}
-              >
-                <Text style={styles.buttonText}>✔️ เช็คชื่อเข้าเรียน</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.attendanceButton}
-                onPress={() => {
-                  if (item.id) {
-                    
-                    navigation.navigate("ClassDetail", { cid: item.id });
-                  } else {
-                    Alert.alert("⚠️ ข้อมูลไม่ถูกต้อง");
-                  }
-                }}
-              >
-                <Text style={styles.buttonText}>✔️ เข้าห้องเรียน</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        />
-      ) : (
-        <Text style={styles.noClassText}>❌ ยังไม่มีรายวิชาที่เรียน</Text>
-      )}
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.buttonText}>🔙 ย้อนกลับ</Text>
-      </TouchableOpacity>
-    </View>
+    <ImageBackground
+      source={{ uri: "https://i.pinimg.com/originals/8d/a9/07/8da9074b5420a96f47a5941e0c317b58.gif" }}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>📚 รายวิชาที่เรียน</Text>
+        {loading ? (
+          <ActivityIndicator size="large" color="#007bff" />
+        ) : classes.length > 0 ? (
+          <FlatList
+            data={classes}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.classItem}>
+                {/* แสดงภาพปกของรายวิชา ถ้ามี */}
+                {item.photo ? (
+                  <Image source={{ uri: item.photo }} style={styles.classImage} />
+                ) : null}
+                <Text style={styles.classText}>📖 {item.name} ({item.code})</Text>
+                <Text style={styles.roomText}>📍 ห้อง: {item.room || "ไม่ระบุ"}</Text>
+                <TouchableOpacity
+                  style={styles.attendanceButton}
+                  onPress={() => handleAttendance(item.id)}
+                >
+                  <Text style={styles.buttonText}>✔️ เช็คชื่อเข้าเรียน</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.attendanceButton}
+                  onPress={() => {
+                    if (item.id) {
+                      navigation.navigate("ClassDetail", { cid: item.id });
+                    } else {
+                      Alert.alert("⚠️ ข้อมูลไม่ถูกต้อง");
+                    }
+                  }}
+                >
+                  <Text style={styles.buttonText}>✔️ เข้าห้องเรียน</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+        ) : (
+          <Text style={styles.noClassText}>❌ ยังไม่มีรายวิชาที่เรียน</Text>
+        )}
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.buttonText}>🔙 ย้อนกลับ</Text>
+        </TouchableOpacity>
+      </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width,
+    height,
+  },
   container: {
     flex: 0.95,
-    justifyContent: "flex-start",  // ปรับให้เริ่มจากด้านบน
-    alignItems: "center", // จัดกลางในแนวนอน
-    backgroundColor: "#f4f4f4",
+    justifyContent: "flex-start",
+    alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 80, // เพิ่มระยะห่างจากด้านบน
+    paddingTop: 80,
+    backgroundColor: "rgba(0,0,0,0.3)", // โปร่งใสเล็กน้อยเพื่อให้ข้อความเด่นขึ้น
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#333",
+    color: "#fff", // ให้ตัวอักษรสีขาวเพื่อให้อ่านง่าย
     marginBottom: 20,
   },
   classItem: {
-    backgroundColor: "#007bff",
-    padding: 18,
-    marginVertical: 15, 
-    borderRadius: 10,
-    width: "90%", 
+    backgroundColor: "#F8F8FF",
+    padding: 25,
+    marginVertical: 15,
+    borderRadius: 15,
+    width: "100%",
     alignItems: "center",
-    alignSelf: "center",  // ✅ บังคับให้อยู่ตรงกลางแนวนอน
+    alignSelf: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 5,
   },
+  classImage: {
+    width: 80,
+    height: 80,
+    marginBottom: 10,
+    borderRadius: 8,
+  },
   classText: {
-    color: "#fff",
+    color: "#000000",
     fontSize: 18,
   },
-  refreshButton: {
-    backgroundColor: "#17a2b8",
-    width: "80%",
-    paddingVertical: 15,
-    alignItems: "center",
-    borderRadius: 12,
-    marginTop: 10,
+  roomText: {
+    color: "#000000",
+    fontSize: 16,
+    marginBottom: 10,
   },
   attendanceButton: {
     backgroundColor: "#28a745",
@@ -221,12 +274,13 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: "center",
     borderRadius: 12,
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
+    alignSelf: "center",
   },
   noClassText: {
     fontSize: 18,
-    color: "gray",
+    color: "#fff",
     marginTop: 20,
   },
 });

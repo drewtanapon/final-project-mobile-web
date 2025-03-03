@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, Alert, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Alert,
+  StyleSheet,
+  ImageBackground,
+} from "react-native";
 import { auth, db } from "./firebaseConfig"; 
 import { collection, doc, setDoc, query, getDocs, getDoc, serverTimestamp } from "firebase/firestore";
 
@@ -19,7 +27,7 @@ export default function JoinClassByCode({ navigation }) {
     }
 
     try {
-      // 1) ค้นหาชั้นเรียนที่มี info.code ตรงกับ classCode
+      // ค้นหาชั้นเรียน
       const q = query(collection(db, "classroom"));
       const querySnapshot = await getDocs(q);
 
@@ -36,12 +44,12 @@ export default function JoinClassByCode({ navigation }) {
         return;
       }
 
-      // 2) ดึงข้อมูลของนักเรียน
+      // ดึงข้อมูลของนักเรียน
       const studentRef = doc(db, "Student", user.uid);
       const studentSnap = await getDoc(studentRef);
       const studentData = studentSnap.exists() ? studentSnap.data() : {};
 
-      // 3) เพิ่มนักเรียนเข้าสู่ชั้นเรียน
+      // เพิ่มนักเรียนเข้าสู่ชั้นเรียน
       await setDoc(doc(db, "classroom", classId, "Student", user.uid), {
         sid: studentData.studentId || "-",
         name: studentData.username || user.displayName || "ไม่ระบุชื่อ",
@@ -50,7 +58,7 @@ export default function JoinClassByCode({ navigation }) {
         joinedAt: serverTimestamp(),
       }, { merge: true });
 
-      // 4) ✅ เพิ่ม Subject ID ไปที่ subjectList ของ Student
+      // เพิ่ม Subject ID ไปที่ subjectList ของ Student
       const studentSubjectRef = doc(db, "Student", user.uid, "subjectList", classId);
       await setDoc(studentSubjectRef, {
         createdAt: serverTimestamp(),
@@ -58,12 +66,11 @@ export default function JoinClassByCode({ navigation }) {
         phoneNumber: user.phoneNumber || "-",
         studentId: studentData.studentId || "-",
         username: studentData.username || "-",
-      }, { merge: true }); // ✅ ใช้ merge เพื่อไม่ให้ข้อมูลเก่าหายไป
+      }, { merge: true });
 
       Alert.alert("สำเร็จ", "เข้าร่วมชั้นเรียนเรียบร้อย!");
-      setClassCode(""); // ล้างค่า
+      setClassCode("");
 
-      // ✅ กลับไปที่หน้า ShowClass เพื่อดูชั้นเรียนที่เพิ่มใหม่
       navigation.navigate("ShowClass");
     } catch (error) {
       console.error("❌ Error joining class:", error);
@@ -72,90 +79,57 @@ export default function JoinClassByCode({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>เข้าร่วมชั้นเรียน</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="กรอกรหัสวิชา (info.code)"
-        value={classCode}
-        onChangeText={setClassCode}
-      />
-      <Button title="เข้าร่วม" onPress={handleJoinClass} />
-    </View>
+    <ImageBackground
+      source={{ uri: "https://i.pinimg.com/originals/52/64/6d/52646df3a26cd5696a1187b36b6fb095.gif" }}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>เข้าร่วมชั้นเรียน</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="กรอกรหัสวิชา (info.code)"
+          value={classCode}
+          onChangeText={setClassCode}
+          
+        />
+        <Button title="เข้าร่วม" onPress={handleJoinClass} />
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    backgroundColor: "#f8f9fa", // สีพื้นหลังโทนอ่อน
-    alignItems: "center",
+    width: "100%",
+    height: "100%",
     justifyContent: "center",
+    alignItems: "center",
+  },
+  container: {
+    width: "90%",
     padding: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.8)", // ทำให้เนื้อหาอ่านง่ายขึ้น
+    borderRadius: 15,
+    alignItems: "center",
   },
   title: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#007bff", // สีน้ำเงินสดใส
+    color: "#00000",
     marginBottom: 20,
     textAlign: "center",
   },
-  inputContainer: {
+  input: {
+    fontSize: 20,
     width: "100%",
-    backgroundColor: "#ffffff",
-    padding: 15,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4, // เงาใน Android
+    borderColor: "#ccc",
+    backgroundColor: "#fff",
     marginBottom: 15,
   },
-  input: {
-    fontSize: 18,
-    width: "100%",
-    color: "#333",
-  },
-  joinButton: {
-    backgroundColor: "#28a745", // สีเขียวสด
-    paddingVertical: 14,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-    width: "100%",
-  },
-  joinButtonText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#fff",
-  },
-  backButton: {
-    backgroundColor: "#dc3545", // สีแดง
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-    width: "100%",
-  },
-  backButtonText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#fff",
-  },
 });
+

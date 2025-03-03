@@ -21,6 +21,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db, auth } from "./firebaseConfig";
+import { Image } from "react-native";
 
 const ClassDetail = ({ navigation, route }) => {
   const { cid } = route.params || {};
@@ -168,7 +169,13 @@ const ClassDetail = ({ navigation, route }) => {
           <ActivityIndicator size="large" color="#007bff" />
         ) : (
           <>
-            <Text style={styles.title}>เข้าห้องเรียน</Text>
+            <Text style={styles.title}>
+            เข้าห้องเรียน
+            <Image
+              source={{ uri: "https://i.pinimg.com/originals/73/69/6e/73696e022df7cd5cb3d999c6875361dd.gif" }}
+              style={styles.icon}
+            />
+            </Text>
             <Text style={styles.courseText}>📚 รหัสวิชา: {cid}</Text>
             <Text style={styles.courseText}>📖 ชื่อวิชา: {courseName}</Text>
 
@@ -264,6 +271,12 @@ const styles = {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+
+  icon: {
+    width: 40,  // ปรับขนาดกว้าง
+    height: 40, // ปรับขนาดสูง
+    marginLeft: 10, // เว้นระยะห่างจากข้อความ
   },
 };
 
