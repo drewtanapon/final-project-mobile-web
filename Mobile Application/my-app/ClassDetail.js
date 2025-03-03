@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db, auth } from "./firebaseConfig";
 
-const JoinClassScreen = ({ navigation, route }) => {
+const ClassDetail = ({ navigation, route }) => {
     const { cid } = route.params || {};
     const [cno, setCno] = useState(null);
     const [qid, setQid] = useState(null);
@@ -191,4 +191,4 @@ const styles = {
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" }
 };
 
-export default JoinClassScreen;
+export default ClassDetail;
